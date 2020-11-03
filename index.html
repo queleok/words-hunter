@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+        <title>Words hunter</title>
+        <link rel=stylesheet href="styles.css">
+        <script src="words-hunter.js"></script>
+    </head>
+    <body class="content">
+        <div class="content canvas">
+            <div id="timer" class="content"></div>
+            <div id="playground" class="content">
+                <div id="letters" class="content">
+                </div>
+                <div id="controls" class="content">
+                    <input id="word" type="text" autofocus="true" maxlength="16" autocomplete="off" formmethod="get" pattern="[a-z]{3,16}">
+                    <p id='result' class='result hidden'>Result: ...</p><button id='again' class='hidden'>again</button>
+                </div>
+            </div>
+            <div id="scores" class="content"></div>
+        </div>
+    </body>
+</html>
