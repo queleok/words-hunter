@@ -123,3 +123,17 @@ input[type="text"] {
     min-width: 160pt;
     max-width: 250pt;
 }
+
+.main-block {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 16pt;
+    background-color: beige;
+    width: 100%;
+    margin: 2px;
+}
+
+.main-link {
+    color: darkolivegreen;
+    text-decoration: none;
+    margin: 2px;
+}

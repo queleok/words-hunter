@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+        <title>Words hunter</title>
+        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+        <link rel=stylesheet href="styles.css">
+        <script src="words-hunter.js"></script>
+    </head>
+    <body class="vbox-nowrap">
+        <div class="vbox-nowrap canvas">
+            <div id="timer" class="hbox-nowrap"></div>
+            <div class="hbox-nowrap">
+                <div id="playground" class="vbox-nowrap">
+                    <div id="letters" class="hbox-wrap-space">
+                    </div>
+                    <input id="word" type="text" autofocus="true" maxlength="16" autocomplete="off" formmethod="get" pattern="[a-z]{3,16}">
+                    <pre id='result' class='result hidden'>Result: ...</pre>
+                    <div id='again' class='button hidden'></div>
+                </div>
+                <div id="scores" class="vbox-nowrap"></div>
+            </div>
+        </div>
+    </body>
+</html>
