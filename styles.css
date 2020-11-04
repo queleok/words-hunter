@@ -21,16 +21,22 @@
     padding-top: 12.5%;
     padding-bottom: 12.5%;
     align-content: center;
+    background-color: beige;
 }
 
 #timer {
     width: 100%;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 35pt;
+    color: gainsboro;
 }
 
 #letters {
     width: 100%;
     justify-content: space-around;
     align-content: space-around;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 30pt;
 }
 
 #playground {
@@ -43,20 +49,20 @@
     align-content: center;
 }
 
-#again {
-    height: auto;
-}
-
 .result {
     margin-inline-end: 5px;
     margin-block-start: 0px;
     margin-block-end: 0px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 25pt;
 }
 
 .score {
     margin: 0px;
     border: 0px;
     padding: 0px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 20;
 }
 
 .success {
@@ -70,6 +76,14 @@
 .failure {
     color: indianred;
 }
+
+.network-failure {
+    color: lightgray;
+    text-decoration: line-through;
+}
+
 .canvas {
-    width: 400px;
+    min-width: 240px;
+    max-width: 800px;
+    padding-top: 2%;
 }

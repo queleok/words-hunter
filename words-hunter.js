@@ -1,4 +1,3 @@
-let letters = [];
 let freqmap = Array(26).fill(0);
 const a_code = 'a'.charCodeAt(0);
 
@@ -23,23 +22,19 @@ function randn_bm() {
  * frequency is assumed to be the standard normal distribution for simplicity.
  */
 function generateLetters() {
-    letters = [];
+    const letters_div = document.getElementById('letters');
+    letters_div.textContent = '';
+
     freqmap = Array(26).fill(0);
+
     for (i = 0; i < 16; i++) {
         const letter_index = Math.floor(Math.abs(randn_bm()) * 25 / 2);
         const letter = letters_by_freqency[letter_index % 25];
         ++freqmap[letter.charCodeAt(0) - a_code];
-        letters.push(letter);
-    }
-}
 
-function renderLetters() {
-    const letters_div = document.getElementById('letters');
-    letters_div.textContent = '';
-    for (i = 0; i < letters.length; i++) {
         let cell_div = document.createElement('div');
         cell_div.setAttribute('class', 'content cell');
-        cell_div.textContent = letters[i];
+        cell_div.textContent = letter;
         letters_div.append(cell_div);
     }
 }
@@ -73,8 +68,8 @@ function reportResultsOrWait() {
     if (pendingElements.length === 0) {
         reportResults();
     } else {
-        console.log('there are still unprocessed elements, delaying report rendering by 1 sec')
-        setTimeout(reportResults, 1000);
+        console.log('there are still unprocessed elements, delaying report rendering by 2 sec')
+        setTimeout(reportResults, 2000);
     }
 }
 
@@ -127,7 +122,43 @@ function validateWord(word) {
     return true;
 }
 
+function tryFetch(word, published_word, attempts) {
+    setTimeout(() => {
+            fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + word)
+                .then(function(response) {
+                    if (response.ok) {
+                        return true;
+                    } if (response.status === 404) {
+                        return Promise.reject(response.status);
+                    } else {
+                        return false;
+                    }
+                })
+                .then(function(status_ok) {
+                    if (status_ok)
+                        published_word.setAttribute('class', 'score success');
+                    else if (attempts <= 0) {
+                        Promise.reject(response.status);
+                        return;
+                    } else
+                        tryFetch(word, published_word, --attempts);
+                })
+                .catch(function(error) {
+                    if (error === 404)
+                        published_word.setAttribute('class', 'score failure');
+                    else {
+                        console.log('Failed to resolve word "' + word + '" due to network issues, error: ' + error);
+                        published_word.setAttribute('id', '');
+                        published_word.setAttribute('class', 'score network-failure');
+                    }
+                })
+        }, 500);
+}
+
 function publishWord(word) {
+    if (word === null || word.length < 2)
+        return;
+
     const id = 'w_' + word;
     if (undefined != document.getElementById(id)) return;
 
@@ -139,23 +170,7 @@ function publishWord(word) {
     scores.append(published_word);
     
     if (validateWord(word)) {
-        setTimeout(() => {
-            fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + word)
-                .then(function(response) {
-                    if (response.ok) {
-                        return true;
-                    } else {
-                        return Promise.reject('Request failed, status: ' + response.status);
-                    }
-                })
-                .then(function() {
-                    published_word.setAttribute('class', 'score success');
-                })
-                .catch(function(error) {
-                    console.log(error);
-                    published_word.setAttribute('class', 'score failure');
-                })
-            }, 500);
+        tryFetch(word, published_word, 2);
     } else {
         published_word.setAttribute('class', 'score failure');
     }
@@ -170,10 +185,11 @@ function handleWord(e) {
     switch(e.keyCode) {
         case 13:
             const word_input = document.getElementById('word');
-            if (word_input.checkValidity()) {
-                const word = escapeRegExp(word_input.value.toLowerCase());
-                publishWord(word);
+            const word_unescaped = new String(word_input.value);
+            if (word_input.checkValidity() && word_unescaped.length > 2) {
                 word_input.value = '';
+                const word = escapeRegExp(word_unescaped.toLowerCase());
+                publishWord(word);
             }
             break;
     }
@@ -182,7 +198,6 @@ function handleWord(e) {
 
 function reset() {
     generateLetters();
-    renderLetters();
 
     const word_input = document.getElementById('word');
     word_input.classList.remove('hidden');
