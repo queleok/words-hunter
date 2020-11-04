@@ -33,7 +33,7 @@ function generateLetters() {
         ++freqmap[letter.charCodeAt(0) - a_code];
 
         let cell_div = document.createElement('div');
-        cell_div.setAttribute('class', 'content cell');
+        cell_div.setAttribute('class', 'hbox-nowrap cell');
         cell_div.textContent = letter;
         letters_div.append(cell_div);
     }
@@ -60,7 +60,7 @@ function reportResults() {
         res += word.length - 2;
     }
     const results = document.getElementById('result');
-    results.textContent = 'Result: ' + res;
+    results.textContent = 'Result:  ' + res;
 }
 
 function reportResultsOrWait() {
