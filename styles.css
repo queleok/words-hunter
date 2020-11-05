@@ -94,21 +94,58 @@
 .score {
     margin: 0px;
     border: 0px;
-    padding: 0px;
+    padding-left: 17pt;
     font-family: 'Source Code Pro', monospace;
     font-size: 16pt;
 }
 
 .success {
-    color: darkolivegreen;
+    color: black;
+    background-image: url(correct-symbol.svg);
+    background-repeat: no-repeat;
+    background-size: 14pt;
+    background-position: left;
+    filter: invert(35%) sepia(39%) saturate(588%) hue-rotate(40deg) brightness(96%) contrast(86%);
 }
 
 .pending {
-    color: skyblue;
+    color: black;
+    position: relative;
+    overflow: hidden;
+    filter: invert(35%) sepia(64%) saturate(788%) hue-rotate(194deg) brightness(95%) contrast(94%);
+}
+
+.pending::before {
+    content: "";
+    position: absolute;
+    width: 14pt;
+    height: 14pt;
+    left: 0%;
+    top: 0%;
+    z-index: -1;
+    background-image: url(spinner-of-dots.svg);
+    background-repeat: no-repeat;
+    background-size: 14pt;
+    background-position: left;
+    animation: spinning 2s linear infinite;
+}
+
+@keyframes spinning {
+    0%{
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .failure {
-    color: indianred;
+    color: black;
+    background-image: url(remove-symbol.svg);
+    background-repeat: no-repeat;
+    background-size: 14pt;
+    background-position: left;
+    filter: invert(40%) sepia(81%) saturate(405%) hue-rotate(311deg) brightness(97%) contrast(93%);
 }
 
 .network-failure {
