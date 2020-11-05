@@ -137,3 +137,7 @@ input[type="text"] {
     text-decoration: none;
     margin: 2px;
 }
+
+.main-link:hover {
+    color: olive;
+}
