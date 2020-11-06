@@ -76,14 +76,11 @@
 }
 
 .button {
-    max-width: 25pt;
-    max-height: 25pt;
     width:  15%;
-    padding-top: 12.5%;
-    padding-bottom: 12.5%;
+    padding-top: 15%;
     background-image: url(refresh-arrow.svg);
     background-repeat: no-repeat;
-    background-size: 100%;
+    background-size: contain;
 }
 
 .button:hover,
@@ -94,6 +91,7 @@
 .score {
     font-family: 'Source Code Pro', monospace;
     font-size: 16pt;
+    display: flex;
 }
 
 .score::before {
@@ -105,7 +103,6 @@
 }
 
 .success {
-    display: flex;
     color: black;
     filter: invert(35%) sepia(39%) saturate(588%) hue-rotate(40deg) brightness(96%) contrast(86%);
 }
@@ -116,7 +113,6 @@
 
 .pending-score {
     color: black;
-    display: flex;
     overflow: hidden;
     filter: invert(35%) sepia(64%) saturate(788%) hue-rotate(194deg) brightness(95%) contrast(94%);
 }
@@ -151,7 +147,6 @@
 }
 
 .failure {
-    display: flex;
     color: black;
     filter: invert(40%) sepia(81%) saturate(405%) hue-rotate(311deg) brightness(97%) contrast(93%);
 }
@@ -161,8 +156,15 @@
 }
 
 .network-failure {
-    color: lightgray;
+    color: black;
     text-decoration: line-through;
+    pointer-events: none;
+    filter: invert(87%) sepia(0%) saturate(2%) hue-rotate(49deg) brightness(103%) contrast(92%);
+}
+
+.network-failure::before {
+    background-image: url(refresh-arrow.svg);
+    pointer-events: auto;
 }
 
 input[type="text"] {

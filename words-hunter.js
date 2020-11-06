@@ -144,9 +144,17 @@ function tryFetch(word, published_word, attempts) {
                     }
                 })
                 .then(function(status_ok) {
-                    if (status_ok)
+                    if (status_ok) {
                         published_word.setAttribute('class', 'score success');
-                    else if (attempts <= 0) {
+                        const results = document.getElementById('result');
+                        if (!results.classList.contains('hidden') && !results.classList.contains('pending-result')) {
+                            const words = results.textContent.split(' ');
+                            let res = parseInt(words.pop());
+                            res += word.length - 2;
+                            if (!isNaN(res))
+                                results.textContent = 'Result: ' + renderResult(res);
+                        }
+                    } else if (attempts <= 0) {
                         Promise.reject(response.status);
                         return;
                     } else
@@ -157,8 +165,15 @@ function tryFetch(word, published_word, attempts) {
                         published_word.setAttribute('class', 'score failure');
                     else {
                         console.log('Failed to resolve word "' + word + '" due to network issues, error: ' + error);
-                        published_word.setAttribute('id', '');
                         published_word.setAttribute('class', 'score network-failure');
+                        const retry = (e) => {
+                            published_word.classList.remove('network-failure');
+                            published_word.classList.add('pending-score');
+                            tryFetch(word, published_word, 2)
+                            e.stopPropagation();
+                            published_word.removeEventListener('click', retry);
+                        };
+                        published_word.addEventListener('click', retry);
                     }
                 })
         }, 500);
