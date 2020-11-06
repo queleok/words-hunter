@@ -52,6 +52,12 @@ function renderTime(sec) {
     return formatTimeSlot(mins) + ':' + formatTimeSlot(secs);
 }
 
+function renderResult(res) {
+    if (res < 10) return '  ' + res;
+    else if (res < 100) return ' ' + res;
+    return res;
+}
+
 function reportResults() {
     let res = 0;
     const successElements = document.getElementsByClassName('success');
@@ -60,15 +66,18 @@ function reportResults() {
         res += word.length - 2;
     }
     const results = document.getElementById('result');
-    results.textContent = 'Result:  ' + res;
+    results.classList.remove('pending-result');
+    results.textContent = 'Result: ' + renderResult(res);
 }
 
 function reportResultsOrWait() {
-    const pendingElements = document.getElementsByClassName('pending');
+    const pendingElements = document.getElementsByClassName('pending-score');
     if (pendingElements.length === 0) {
         reportResults();
     } else {
-        console.log('there are still unprocessed elements, delaying report rendering by 2 sec')
+        console.log('there are still unprocessed elements, delaying report rendering by 2 sec');
+        const results = document.getElementById('result');
+        results.classList.add('pending-result');
         setTimeout(reportResults, 2000);
     }
 }
@@ -165,7 +174,7 @@ function publishWord(word) {
     const scores = document.getElementById('scores');
     let published_word = document.createElement('p');
     published_word.textContent = word;
-    published_word.setAttribute('class', 'score pending');
+    published_word.setAttribute('class', 'score pending-score');
     published_word.setAttribute('id', id);
     scores.append(published_word);
     
@@ -205,8 +214,9 @@ function reset() {
     word_input.focus();
     
     const results = document.getElementById('result');
-    results.textContent = 'Result: ...';
+    results.textContent = 'Result:  ';
     results.classList.add('hidden');
+    results.classList.remove('pending-result');
     
     const again = document.getElementById('again');
     again.removeEventListener('click', reset);

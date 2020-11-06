@@ -92,42 +92,53 @@
 }
 
 .score {
-    margin: 0px;
-    border: 0px;
-    padding-left: 17pt;
     font-family: 'Source Code Pro', monospace;
     font-size: 16pt;
 }
 
-.success {
-    color: black;
-    background-image: url(correct-symbol.svg);
+.score::before {
+    content: "";    
     background-repeat: no-repeat;
-    background-size: 14pt;
-    background-position: left;
+    background-size: contain;
+    width: 16pt;
+    height: 16pt;
+}
+
+.success {
+    display: flex;
+    color: black;
     filter: invert(35%) sepia(39%) saturate(588%) hue-rotate(40deg) brightness(96%) contrast(86%);
 }
 
-.pending {
+.success::before {
+    background-image: url(correct-symbol.svg);
+}
+
+.pending-score {
     color: black;
-    position: relative;
+    display: flex;
     overflow: hidden;
     filter: invert(35%) sepia(64%) saturate(788%) hue-rotate(194deg) brightness(95%) contrast(94%);
 }
 
-.pending::before {
-    content: "";
-    position: absolute;
-    width: 14pt;
-    height: 14pt;
-    left: 0%;
-    top: 0%;
-    z-index: -1;
+.pending-result {
+    color: black;
+    display: flex;
+    flex-direction: row-reverse;
+    overflow: hidden;
+}
+
+[class*="pending-"]::before {
     background-image: url(spinner-of-dots.svg);
-    background-repeat: no-repeat;
-    background-size: 14pt;
-    background-position: left;
     animation: spinning 2s linear infinite;
+}
+
+.pending-result::before {
+    height: 40px;
+    width: 40px;
+    content: "";    
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 @keyframes spinning {
@@ -140,12 +151,13 @@
 }
 
 .failure {
+    display: flex;
     color: black;
-    background-image: url(remove-symbol.svg);
-    background-repeat: no-repeat;
-    background-size: 14pt;
-    background-position: left;
     filter: invert(40%) sepia(81%) saturate(405%) hue-rotate(311deg) brightness(97%) contrast(93%);
+}
+
+.failure::before {
+    background-image: url(remove-symbol.svg);
 }
 
 .network-failure {
