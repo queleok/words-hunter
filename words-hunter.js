@@ -202,6 +202,7 @@ function reset() {
     const word_input = document.getElementById('word');
     word_input.classList.remove('hidden');
     word_input.addEventListener('keypress', handleWord);
+    word_input.focus();
     
     const results = document.getElementById('result');
     results.textContent = 'Result: ...';
