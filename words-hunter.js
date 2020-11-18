@@ -3,39 +3,93 @@ const a_code = 'a'.charCodeAt(0);
 
 // Letters frequency according to Cornwell University Math Explorer's Project:
 // http://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
-const letters_by_freqency = ['e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'h', 'd', 'l', 'u', 'c', 'm', 'f', 'y', 'w', 'g', 'p', 'b', 'v', 'k', 'x', 'q', 'j', 'z'];
+const letters_by_frequency = ['e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'h', 'd', 'l', 'u', 'c', 'm', 'f', 'y', 'w', 'g', 'p', 'b', 'v', 'k', 'x', 'q', 'j', 'z' ];
+const frequencies = [12.02, 9.10, 8.12, 7.68, 7.31, 6.95, 6.28, 6.02, 5.92, 4.32, 3.98, 2.88, 2.71, 2.61, 2.30, 2.11, 2.09, 2.03, 1.82, 1.49, 1.11, 0.69, 0.17, 0.11, 0.10, 0.07];
 
-/**
- * Box-Muller transform for sampling standard normal distribution.
- * Shamelessly copy-pasted from the stackoverflow
- * https://stackoverflow.com/a/36481059/14197098
- */
-function randn_bm() {
-    var u = 0, v = 0;
-    while(u === 0) u = Math.random();
-    while(v === 0) v = Math.random();
-    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+// Vowels frequency in 14+-letter words from the 100k wiktionary (see docs for more info)
+const vowels_by_frequency = ['i', 'e', 'a', 'o', 'u', 'y'];
+const frequencies_vowels = [ 0.280220, 0.260504, 0.174855, 0.162250, 0.086296, 0.035876 ];
+
+//               a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z
+const limits = [ 3, 2, 2, 2, 3, 2, 2, 2, 3, 1, 2, 3, 2, 3, 3, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2 ];
+
+function isVowel(chr) {
+    return vowels_by_frequency.indexOf(chr) !== -1;
+}
+
+function createLetterDiv(letter) {
+    let cell_div = document.createElement('div');
+    cell_div.setAttribute('class', 'hbox-nowrap cell');
+    cell_div.textContent = letter;
+    return cell_div;
+}
+
+function get_intervals(freqs) {
+    const base_sum = freqs.reduce((accumulator, value) => accumulator + value);
+    let ret = [...freqs];
+    ret[0] /= base_sum;
+    for (let i = 1; i < freqs.length; i++) {
+        ret[i] /= base_sum;
+        ret[i] += ret[i - 1];
+    }
+    return ret;
 }
 
 /**
- * Naive & sloppy generation of letters: distribution of letters sorted by their
- * frequency is assumed to be the standard normal distribution for simplicity.
+ * Shortly put, frequencies are normalized to their sum and are used to divide
+ * the interval [0.0, 1.0] into 26 (initially) sub-intervals with widths proportioanl
+ * to their value (the bigger the frequency, the wider the sub-interval). Maximal
+ * limits of repetitions are posed on letters based on 99-th percentile in the
+ * distribution of letters built from the 100k words from the wiki dictionary.
+ * When the limit is reached, the letter is removed from the array of elements to be
+ * considered, and sub-intervals are re-built from the remaining elements. If there
+ * are less than 3 vowels after generation of the first 13 letters, the last three
+ * letters will be generated from vowels only based on their distribution in long
+ * words (14+ letters).
+ * 
+ * See docs/wiki100k-stats.ipynb for the rationale behind the implemented algorithm.
  */
 function generateLetters() {
     const letters_div = document.getElementById('letters');
     letters_div.textContent = '';
-
+    
     freqmap = Array(26).fill(0);
 
-    for (i = 0; i < 16; i++) {
-        const letter_index = Math.floor(Math.abs(randn_bm()) * 25 / 2);
-        const letter = letters_by_freqency[letter_index % 25];
+    let freqs_vowles = [...frequencies_vowels];
+    let vowels = [...vowels_by_frequency];
+    let vowel_count = 0;
+
+    let freqs = [...frequencies];
+    let letters = [...letters_by_frequency];
+    let intervals = get_intervals(freqs);
+
+    for (let i = 0; i < 16; i++) {
+        const nmb = Math.random();
+        
+        if ((i > 13) && (vowel_count < 3) && (freqs !== freqs_vowles)) {
+            letters = vowels;
+            freqs = freqs_vowles;
+            intervals = get_intervals(freqs);
+        }
+
+        const lower_bound = (element) => element > nmb;
+        const letter_index = intervals.findIndex(lower_bound);
+        const letter = letters[letter_index];
+        if (isVowel(letter)) ++vowel_count;
         ++freqmap[letter.charCodeAt(0) - a_code];
 
-        let cell_div = document.createElement('div');
-        cell_div.setAttribute('class', 'hbox-nowrap cell');
-        cell_div.textContent = letter;
-        letters_div.append(cell_div);
+        if (freqmap[letter.charCodeAt(0) - a_code] === limits[letter.charCodeAt(0) - a_code]) {
+            letters.splice(letter_index, 1);
+            freqs.splice(letter_index, 1);
+            let vowel_index = vowels.indexOf(letter);
+            if (vowel_index >= 0) {
+                vowels.splice(vowel_index, 1);
+                freqs_vowles.splice(vowel_index, 1);
+            }
+            intervals = get_intervals(freqs);
+        }
+
+        letters_div.append(createLetterDiv(letter));
     }
 }
 
@@ -124,7 +178,7 @@ function startTimer(minutes) {
 function validateWord(word) {
     const freq = [...freqmap];
     
-    for (i = 0; i < word.length; i++) {
+    for (let i = 0; i < word.length; i++) {
         if (--freq[word.charCodeAt(i) - a_code] < 0) return false;
     }
 
