@@ -150,11 +150,6 @@ function stopTimer(tmr) {
     const results = document.getElementById('result');
     results.classList.remove('hidden');
     reportResultsOrWait();
-    
-    // show play again button
-    const again = document.getElementById('again');
-    again.classList.remove('hidden');
-    again.addEventListener('click', reset);
 }
 
 function startTimer(minutes) {
@@ -162,9 +157,11 @@ function startTimer(minutes) {
     left.setAttribute('id', 'timeleft');
     let sec = Math.floor(minutes * 60);
     left.textContent = renderTime(sec);
+
     const timer_div = document.getElementById('timer');
     timer_div.textContent = '';
     timer_div.append(left);
+
     let tmr = setInterval(() => {
         if (sec === 0) {
             stopTimer(tmr);
@@ -173,6 +170,11 @@ function startTimer(minutes) {
         --sec;
         left.textContent = renderTime(sec);
     }, 1000);
+    
+    // show play again button
+    const again = document.getElementById('again');
+    again.addEventListener('click', reset);
+    again.tmr = tmr;
 }
 
 function validateWord(word) {
@@ -274,7 +276,13 @@ function handleWord(e) {
     e.stopPropagation();
 }
 
-function reset() {
+function reset(e) {
+    if (e != null && e.currentTarget.tmr != null) {
+        stopTimer(e.currentTarget.tmr);
+        e.currentTarget.removeEventListener('click', reset);
+        delete e.currentTarget.tmr;
+    }
+
     generateLetters();
 
     const word_input = document.getElementById('word');
@@ -286,10 +294,6 @@ function reset() {
     results.textContent = 'Result:  ';
     results.classList.add('hidden');
     results.classList.remove('pending-result');
-    
-    const again = document.getElementById('again');
-    again.removeEventListener('click', reset);
-    again.classList.add('hidden');
     
     const scores = document.getElementById('scores');
     scores.textContent = '';
