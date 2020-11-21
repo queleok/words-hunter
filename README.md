@@ -5,7 +5,8 @@ is to help people learning English to practice words memoization and thus to ext
 vocabulary (eventually).
 
 ## Rules
-- The player is given 16 letters and 2 minutes to compose as much English words as he can;
+- The player is given 16 letters and 2 minutes to compose as many English words as he or
+she can;
 - Only a-z symbols are allowed in the input;
 - The player gets 1 point for the first 3 letters of every word, and 1 more point for every
 consecutive letter, so e.g. the word ```set``` gives 1 point, while the word ```scores```
