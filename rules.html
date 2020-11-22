@@ -14,8 +14,23 @@
                 <a class="main-link" href="play.html"><h3>Play</h3></a>
             </div>
             <div class="main-block">
-                <h3>There are no rules! /* evil laughter */</h3>
-                <p>... yet... they are to be descibed</p>
+                <h3>Long story short...</h3>
+                <p>Build words and get points. The longer is the word the more points you get.</p>
+                <div class="wrap-collabsible">
+                    <input id="collapsible" class="toggle" type="checkbox">
+                    <label for="collapsible" class="lbl-toggle">Longer version</label>
+                    <div class="collapsible-content">
+                        <div class="content-inner">
+                            <ul>
+                                <li>The player is given 16 letters and 2 minutes to compose as many English words as he or she can;</li>
+                                <li>Only a-z symbols are allowed in the input;</li>
+                                <li>The player gets 1 point for the first 3 letters of every word, and 1 more point for every consecutive letter, so e.g. the word set gives 1 point, while the word scores gives 6 points;</li>
+                                <li>Different forms of the same word (e.g. nouns in singular and plural forms, or verbs in present and past tenses) are considered as different words;</li>
+                                <li>The game relies on the free unofficial API for the google dictionaries, which has some limits on the pace of requests, so when those limits are hit, network errors might occur preventing the input word from being validated. In such a situation there is an arrow button that allows the player to repeat the request manually at any time (even after the timer runs out); should this manual request succeed, the results will be updated accordingly.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </body>
