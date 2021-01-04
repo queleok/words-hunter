@@ -177,14 +177,34 @@ function startTimer(minutes) {
     again.tmr = tmr;
 }
 
-function validateWord(word) {
+function escapeMissingLetters(word) {
     const freq = [...freqmap];
     
+    let valid = true;
+
+    let ret = '';
+    let open = '<s>';
+    let close = '';
+
     for (let i = 0; i < word.length; i++) {
-        if (--freq[word.charCodeAt(i) - a_code] < 0) return false;
+        const chr = word.charAt(i);
+        if (--freq[word.charCodeAt(i) - a_code] < 0) {
+            valid = false;
+            ret += open + chr;
+            open = '';
+            close = '</s>';
+        } else {
+            ret += close + chr;
+            open = '<s>';
+            close = '';
+        }
     }
 
-    return true;
+    ret += close;
+
+    if (valid) ret = null;
+
+    return ret;
 }
 
 function tryFetch(word, published_word, attempts) {
@@ -253,14 +273,16 @@ function publishWord(word) {
     }
 
     let published_word = document.createElement('p');
-    published_word.textContent = word;
     published_word.setAttribute('class', 'score pending-score');
     published_word.setAttribute('id', id);
     scores.append(published_word);
     
-    if (validateWord(word)) {
+    const escaped = escapeMissingLetters(word);
+    if (escaped === null) {
+        published_word.textContent = word;
         tryFetch(word, published_word, 2);
     } else {
+        published_word.innerHTML = escaped;
         published_word.setAttribute('class', 'score failure');
     }
 }
