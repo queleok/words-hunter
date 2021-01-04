@@ -240,9 +240,18 @@ function publishWord(word) {
         return;
 
     const id = 'w_' + word;
-    if (undefined != document.getElementById(id)) return;
-
+    const found_word = document.getElementById(id);
     const scores = document.getElementById('scores');
+    if (undefined != found_word) {
+        scores.removeChild(found_word);
+        scores.append(found_word);
+        found_word.classList.add('moved');
+        setTimeout(() => {
+            found_word.classList.remove('moved');
+        }, 1000)
+        return;
+    }
+
     let published_word = document.createElement('p');
     published_word.textContent = word;
     published_word.setAttribute('class', 'score pending-score');

@@ -9,14 +9,17 @@
     </head>
     <body class="vbox-nowrap">
         <div class="vbox-nowrap canvas">
-            <div id="timer" class="hbox-nowrap"></div>
+            <div id="controls" class="hbox-nowrap">
+                <div id="timer" class="hbox-nowrap"></div>
+                <div id="again" class="button"></div>
+            </div>
             <div class="hbox-nowrap">
                 <div id="playground" class="vbox-nowrap">
                     <div id="letters" class="hbox-wrap-space">
                     </div>
-                    <input id="word" type="text" autofocus="true" maxlength="16" autocomplete="off" formmethod="get" pattern="[a-zA-Z]{3,16}">
-                    <pre id='result' class='result hidden'>Result:  </pre>
-                    <div id='again' class='button' name='again'></div>
+                    <input id="word" type="text" autofocus="true" minlength="3" maxlength="16" autocomplete="off" formmethod="get" pattern="[a-zA-Z]{3,16}">
+                    <label for="word"></label>
+                    <pre id="result" class="result hidden">Result:  </pre>
                 </div>
                 <div id="scores" class="vbox-nowrap"></div>
             </div>

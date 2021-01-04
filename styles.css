@@ -45,7 +45,6 @@
 }
 
 #timer {
-    width: 100%;
     font-family: 'Source Code Pro', monospace;
     font-size: 35pt;
     color: gainsboro;
@@ -75,12 +74,18 @@
     font-size: 25pt;
 }
 
-.button {
-    width:  15%;
-    padding-top: 15%;
+#again {
+    height: 0%;
+    width: 0%;
+    padding: 15%;
+    margin: 5%;
     background-image: url(refresh-arrow.svg);
+}
+
+.button {
     background-repeat: no-repeat;
     background-size: contain;
+    filter: invert(99%) sepia(0%) saturate(5888%) hue-rotate(261deg) brightness(88%) contrast(97%);
 }
 
 .button:hover,
@@ -138,7 +143,7 @@
 }
 
 @keyframes spinning {
-    0%{
+    0% {
         transform: rotate(0deg);
     }
     100% {
@@ -167,12 +172,44 @@
     pointer-events: auto;
 }
 
+/* shamelessly copy-pasted from https://css-tricks.com/snippets/css/shake-css-keyframe-animation/ */
+.moved {
+  animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+@keyframes shake {
+    10%, 90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+
+    20%, 80% {
+        transform: translate3d(2px, 0, 0);
+    }
+
+    30%, 50%, 70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+
+    40%, 60% {
+        transform: translate3d(4px, 0, 0);
+    }
+}
+
 input[type="text"] {
     font-size: 16pt;
     font-family: 'Source Code Pro', monospace;
     width: 98%;
     min-width: 160pt;
     max-width: 250pt;
+}
+
+#word:invalid + label::after{
+    content: "Enter a word consisting of 3-16 letters";
+    font-family: 'Source Code Pro', monospace;
+    color: red;
 }
 
 .main-block {
