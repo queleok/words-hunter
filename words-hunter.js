@@ -93,6 +93,52 @@ function generateLetters() {
     }
 }
 
+const queue = {
+    "begin" : null,
+    "end" : null,
+    "length" : 0,
+    "enqueue" : function(item) {
+        const node = {
+            "item" : item,
+            "next" : null
+        };
+        if (this.begin === null) {
+            this.begin = node;
+            this.end = this.begin;
+        } else {
+            this.end.next = node;
+            this.end = this.end.next;
+        }
+        this.length++;
+
+        if (this.length === 1) tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
+    },
+    "dequeue" : function() {
+        if (this.length === 0) {
+            console.log('attempt to dequeue empty queue');
+            return;
+        }
+
+        if (this.length === 1) {
+            this.begin = null;
+            this.end = null;
+            this.length = 0;
+            const results = document.getElementById('result');
+            if (results.classList.contains('pending-result')) reportResults();
+            return;
+        }
+
+        this.length--;
+        this.begin = this.begin.next;
+        tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
+    },
+    "clear" : function() {
+        this.begin = null;
+        this.end = null;
+        this.length = 0;
+    }
+};
+
 function formatTimeSlot(amount) {
     amount = Math.floor(amount);
     if      (amount < 0) return '00';
@@ -124,18 +170,6 @@ function reportResults() {
     results.textContent = 'Result: ' + renderResult(res);
 }
 
-function reportResultsOrWait() {
-    const pendingElements = document.getElementsByClassName('pending-score');
-    if (pendingElements.length === 0) {
-        reportResults();
-    } else {
-        console.log('there are still unprocessed elements, delaying report rendering by 2 sec');
-        const results = document.getElementById('result');
-        results.classList.add('pending-result');
-        setTimeout(reportResults, 2000);
-    }
-}
-
 function stopTimer(tmr) {
     // stop timer
     clearInterval(tmr);
@@ -149,7 +183,12 @@ function stopTimer(tmr) {
     // show results
     const results = document.getElementById('result');
     results.classList.remove('hidden');
-    reportResultsOrWait();
+
+    if (queue.length === 0) {
+        reportResults();
+    } else {
+        results.classList.add('pending-result');
+    }
 }
 
 function startTimer(minutes) {
@@ -207,45 +246,6 @@ function escapeMissingLetters(word) {
     return ret;
 }
 
-const queue = {
-    "begin" : null,
-    "end" : null,
-    "length" : 0,
-    "enqueue" : function(item) {
-        const node = {
-            "item" : item,
-            "next" : null
-        };
-        if (this.begin === null) {
-            this.begin = node;
-            this.end = this.begin;
-        } else {
-            this.end.next = node;
-            this.end = this.end.next;
-        }
-        this.length++;
-
-        if (this.length === 1) tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
-    },
-    "dequeue" : function() {
-        if (this.length === 0) {
-            console.log('attempt to dequeue empty queue');
-            return;
-        }
-
-        if (this.length === 1) {
-            this.begin = null;
-            this.end = null;
-            this.length = 0;
-            return;
-        }
-
-        this.length--;
-        this.begin = this.begin.next;
-        tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
-    }
-};
-
 function tryFetch(word, published_word, attempts) {
     setTimeout(() => {
             fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + word)
@@ -261,14 +261,6 @@ function tryFetch(word, published_word, attempts) {
                 .then(function(status_ok) {
                     if (status_ok) {
                         published_word.setAttribute('class', 'score success');
-                        const results = document.getElementById('result');
-                        if (!results.classList.contains('hidden') && !results.classList.contains('pending-result')) {
-                            const words = results.textContent.split(' ');
-                            let res = parseInt(words.pop());
-                            res += word.length - 2;
-                            if (!isNaN(res))
-                                results.textContent = 'Result: ' + renderResult(res);
-                        }
                         queue.dequeue();
                     } else if (attempts <= 0) {
                         Promise.reject(response.status);
@@ -283,11 +275,17 @@ function tryFetch(word, published_word, attempts) {
                         console.log('Failed to resolve word "' + word + '" due to network issues, error: ' + error);
                         published_word.setAttribute('class', 'score network-failure');
                         const retry = (e) => {
+                            published_word.removeEventListener('click', retry);
                             published_word.classList.remove('network-failure');
                             published_word.classList.add('pending-score');
-                            tryFetch(word, published_word, 2)
+
+                            const results = document.getElementById('result');
+                            results.classList.add('pending-result');
+                            results.textContent = "Result:  ";
+
+                            queue.enqueue({"word" : word, "published_word" : published_word})
+
                             e.stopPropagation();
-                            published_word.removeEventListener('click', retry);
                         };
                         published_word.addEventListener('click', retry);
                         queue.dequeue();
@@ -354,6 +352,8 @@ function reset(e) {
         e.currentTarget.removeEventListener('click', reset);
         delete e.currentTarget.tmr;
     }
+
+    queue.clear();
 
     generateLetters();
 
