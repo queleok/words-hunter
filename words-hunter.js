@@ -207,6 +207,45 @@ function escapeMissingLetters(word) {
     return ret;
 }
 
+const queue = {
+    "begin" : null,
+    "end" : null,
+    "length" : 0,
+    "enqueue" : function(item) {
+        const node = {
+            "item" : item,
+            "next" : null
+        };
+        if (this.begin === null) {
+            this.begin = node;
+            this.end = this.begin;
+        } else {
+            this.end.next = node;
+            this.end = this.end.next;
+        }
+        this.length++;
+
+        if (this.length === 1) tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
+    },
+    "dequeue" : function() {
+        if (this.length === 0) {
+            console.log('attempt to dequeue empty queue');
+            return;
+        }
+
+        if (this.length === 1) {
+            this.begin = null;
+            this.end = null;
+            this.length = 0;
+            return;
+        }
+
+        this.length--;
+        this.begin = this.begin.next;
+        tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
+    }
+};
+
 function tryFetch(word, published_word, attempts) {
     setTimeout(() => {
             fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + word)
@@ -230,16 +269,17 @@ function tryFetch(word, published_word, attempts) {
                             if (!isNaN(res))
                                 results.textContent = 'Result: ' + renderResult(res);
                         }
+                        queue.dequeue();
                     } else if (attempts <= 0) {
                         Promise.reject(response.status);
-                        return;
                     } else
                         tryFetch(word, published_word, --attempts);
                 })
                 .catch(function(error) {
-                    if (error === 404)
+                    if (error === 404) {
                         published_word.setAttribute('class', 'score failure');
-                    else {
+                        queue.dequeue();
+                    } else {
                         console.log('Failed to resolve word "' + word + '" due to network issues, error: ' + error);
                         published_word.setAttribute('class', 'score network-failure');
                         const retry = (e) => {
@@ -250,6 +290,7 @@ function tryFetch(word, published_word, attempts) {
                             published_word.removeEventListener('click', retry);
                         };
                         published_word.addEventListener('click', retry);
+                        queue.dequeue();
                     }
                 })
         }, 500);
@@ -280,7 +321,7 @@ function publishWord(word) {
     const escaped = escapeMissingLetters(word);
     if (escaped === null) {
         published_word.textContent = word;
-        tryFetch(word, published_word, 2);
+        queue.enqueue({"word" : word, "published_word" : published_word});
     } else {
         published_word.innerHTML = escaped;
         published_word.setAttribute('class', 'score failure');
