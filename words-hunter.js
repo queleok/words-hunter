@@ -139,6 +139,30 @@ const queue = {
     }
 };
 
+function resend(e) {
+    const button = document.getElementById('resend');
+    button.removeEventListener('click', resend);
+
+    const failed_words = document.querySelectorAll('.network-failure');
+    if (failed_words.length > 0) {
+        const results = document.getElementById('result');
+        results.classList.add('pending-result');
+        results.textContent = "Result:  ";
+
+        const discailmer = document.getElementById('network-issues-disclaimer');
+        discailmer.classList.add('hidden');
+    }
+
+    for (const word of failed_words) {
+        word.classList.remove('network-failure');
+        word.classList.add('pending-score');
+
+        queue.enqueue({"word" : word.textContent, "published_word" : word});
+    }
+
+    e.stopPropagation();
+}
+
 function formatTimeSlot(amount) {
     amount = Math.floor(amount);
     if      (amount < 0) return '00';
@@ -168,6 +192,14 @@ function reportResults() {
     const results = document.getElementById('result');
     results.classList.remove('pending-result');
     results.textContent = 'Result: ' + renderResult(res);
+
+    const failed_words = document.querySelectorAll('.network-failure');
+    if (failed_words.length > 0) {
+        const discailmer = document.getElementById('network-issues-disclaimer');
+        discailmer.classList.remove('hidden');
+        const resend_button = document.getElementById('resend');
+        resend_button.addEventListener('click', resend);
+    }
 }
 
 function stopTimer(tmr) {
@@ -274,20 +306,6 @@ function tryFetch(word, published_word, attempts) {
                     } else {
                         console.log('Failed to resolve word "' + word + '" due to network issues, error: ' + error);
                         published_word.setAttribute('class', 'score network-failure');
-                        const retry = (e) => {
-                            published_word.removeEventListener('click', retry);
-                            published_word.classList.remove('network-failure');
-                            published_word.classList.add('pending-score');
-
-                            const results = document.getElementById('result');
-                            results.classList.add('pending-result');
-                            results.textContent = "Result:  ";
-
-                            queue.enqueue({"word" : word, "published_word" : published_word})
-
-                            e.stopPropagation();
-                        };
-                        published_word.addEventListener('click', retry);
                         queue.dequeue();
                     }
                 })
@@ -312,17 +330,18 @@ function publishWord(word) {
     }
 
     let published_word = document.createElement('p');
-    published_word.setAttribute('class', 'score pending-score');
+    published_word.classList.add('score');
     published_word.setAttribute('id', id);
     scores.append(published_word);
     
     const escaped = escapeMissingLetters(word);
     if (escaped === null) {
         published_word.textContent = word;
+        published_word.classList.add('pending-score');
         queue.enqueue({"word" : word, "published_word" : published_word});
     } else {
         published_word.innerHTML = escaped;
-        published_word.setAttribute('class', 'score failure');
+        published_word.classList.add('failure');
     }
 }
 
@@ -354,6 +373,11 @@ function reset(e) {
     }
 
     queue.clear();
+
+    const resend_button = document.getElementById('resend');
+    resend_button.removeEventListener('click', resend);
+    const discailmer = document.getElementById('network-issues-disclaimer');
+    discailmer.classList.add('hidden');
 
     generateLetters();
 

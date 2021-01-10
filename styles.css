@@ -82,6 +82,13 @@
     background-image: url(refresh-arrow.svg);
 }
 
+#resend {
+    height: 0%;
+    width: 0%;
+    padding: 5%;
+    background-image: url(refresh-arrow.svg);
+}
+
 .button {
     background-repeat: no-repeat;
     background-size: contain;
@@ -163,13 +170,11 @@
 .network-failure {
     color: black;
     text-decoration: line-through;
-    pointer-events: none;
     filter: invert(87%) sepia(0%) saturate(2%) hue-rotate(49deg) brightness(103%) contrast(92%);
 }
 
 .network-failure::before {
     background-image: url(refresh-arrow.svg);
-    pointer-events: auto;
 }
 
 /* shamelessly copy-pasted from https://css-tricks.com/snippets/css/shake-css-keyframe-animation/ */
@@ -232,33 +237,33 @@ input[type="text"] {
 }
 
 input[type='checkbox'] {
-  display: none;
+    display: none;
 }
 
 .lbl-toggle {
-  display: block;
-  padding: 10pt;
-  cursor: pointer;
-  transition: all 0.25s ease-out;
+    display: block;
+    padding: 10pt;
+    cursor: pointer;
+    transition: all 0.25s ease-out;
 }
 
 .lbl-toggle:hover {
-  color: olive;
+    color: olive;
 }
 
 .lbl-toggle::before {
-  content: ' ';
-  display: inline-block;
+    content: ' ';
+    display: inline-block;
 
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-left: 5px solid currentColor;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 5px solid currentColor;
 
-  vertical-align: middle;
-  margin-right: .7rem;
-  transform: translateY(-2px);
+    vertical-align: middle;
+    margin-right: .7rem;
+    transform: translateY(-2px);
 
-  transition: transform .2s ease-out;
+    transition: transform .2s ease-out;
 }
 
 h3 {
@@ -270,26 +275,35 @@ ul {
 }
 
 .collapsible-content .content-inner {
-  border-bottom-left-radius: 7px;
-  border-bottom-right-radius: 7px;
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
 }
 
 .collapsible-content {
-  max-height: 0px;
-  overflow: hidden;
+    max-height: 0px;
+    overflow: hidden;
 
-  transition: max-height .25s ease-in-out;
+    transition: max-height .25s ease-in-out;
 }
 
 .toggle:checked + .lbl-toggle + .collapsible-content {
-  max-height: 100vh;
+    max-height: 100vh;
 }
 
 .toggle:checked + .lbl-toggle::before {
-  transform: rotate(90deg) translateX(-3px);
+    transform: rotate(90deg) translateX(-3px);
 }
 
 .toggle:checked + .lbl-toggle {
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.disclaimer {
+    max-width: 298px;
+    font-family: 'Source Code Pro';
+    margin: auto;
+    color: black;
+    filter: invert(87%) sepia(0%) saturate(2%) hue-rotate(49deg) brightness(103%) contrast(92%);
+    text-align: center;
 }
