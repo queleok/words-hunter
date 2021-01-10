@@ -93,6 +93,76 @@ function generateLetters() {
     }
 }
 
+const queue = {
+    "begin" : null,
+    "end" : null,
+    "length" : 0,
+    "enqueue" : function(item) {
+        const node = {
+            "item" : item,
+            "next" : null
+        };
+        if (this.begin === null) {
+            this.begin = node;
+            this.end = this.begin;
+        } else {
+            this.end.next = node;
+            this.end = this.end.next;
+        }
+        this.length++;
+
+        if (this.length === 1) tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
+    },
+    "dequeue" : function() {
+        if (this.length === 0) {
+            console.log('attempt to dequeue empty queue');
+            return;
+        }
+
+        if (this.length === 1) {
+            this.begin = null;
+            this.end = null;
+            this.length = 0;
+            const results = document.getElementById('result');
+            if (results.classList.contains('pending-result')) reportResults();
+            return;
+        }
+
+        this.length--;
+        this.begin = this.begin.next;
+        tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
+    },
+    "clear" : function() {
+        this.begin = null;
+        this.end = null;
+        this.length = 0;
+    }
+};
+
+function resend(e) {
+    const button = document.getElementById('resend');
+    button.removeEventListener('click', resend);
+
+    const failed_words = document.querySelectorAll('.network-failure');
+    if (failed_words.length > 0) {
+        const results = document.getElementById('result');
+        results.classList.add('pending-result');
+        results.textContent = "Result:  ";
+
+        const discailmer = document.getElementById('network-issues-disclaimer');
+        discailmer.classList.add('hidden');
+    }
+
+    for (const word of failed_words) {
+        word.classList.remove('network-failure');
+        word.classList.add('pending-score');
+
+        queue.enqueue({"word" : word.textContent, "published_word" : word});
+    }
+
+    e.stopPropagation();
+}
+
 function formatTimeSlot(amount) {
     amount = Math.floor(amount);
     if      (amount < 0) return '00';
@@ -122,17 +192,13 @@ function reportResults() {
     const results = document.getElementById('result');
     results.classList.remove('pending-result');
     results.textContent = 'Result: ' + renderResult(res);
-}
 
-function reportResultsOrWait() {
-    const pendingElements = document.getElementsByClassName('pending-score');
-    if (pendingElements.length === 0) {
-        reportResults();
-    } else {
-        console.log('there are still unprocessed elements, delaying report rendering by 2 sec');
-        const results = document.getElementById('result');
-        results.classList.add('pending-result');
-        setTimeout(reportResults, 2000);
+    const failed_words = document.querySelectorAll('.network-failure');
+    if (failed_words.length > 0) {
+        const discailmer = document.getElementById('network-issues-disclaimer');
+        discailmer.classList.remove('hidden');
+        const resend_button = document.getElementById('resend');
+        resend_button.addEventListener('click', resend);
     }
 }
 
@@ -149,7 +215,12 @@ function stopTimer(tmr) {
     // show results
     const results = document.getElementById('result');
     results.classList.remove('hidden');
-    reportResultsOrWait();
+
+    if (queue.length === 0) {
+        reportResults();
+    } else {
+        results.classList.add('pending-result');
+    }
 }
 
 function startTimer(minutes) {
@@ -222,34 +293,20 @@ function tryFetch(word, published_word, attempts) {
                 .then(function(status_ok) {
                     if (status_ok) {
                         published_word.setAttribute('class', 'score success');
-                        const results = document.getElementById('result');
-                        if (!results.classList.contains('hidden') && !results.classList.contains('pending-result')) {
-                            const words = results.textContent.split(' ');
-                            let res = parseInt(words.pop());
-                            res += word.length - 2;
-                            if (!isNaN(res))
-                                results.textContent = 'Result: ' + renderResult(res);
-                        }
+                        queue.dequeue();
                     } else if (attempts <= 0) {
                         Promise.reject(response.status);
-                        return;
                     } else
                         tryFetch(word, published_word, --attempts);
                 })
                 .catch(function(error) {
-                    if (error === 404)
+                    if (error === 404) {
                         published_word.setAttribute('class', 'score failure');
-                    else {
+                        queue.dequeue();
+                    } else {
                         console.log('Failed to resolve word "' + word + '" due to network issues, error: ' + error);
                         published_word.setAttribute('class', 'score network-failure');
-                        const retry = (e) => {
-                            published_word.classList.remove('network-failure');
-                            published_word.classList.add('pending-score');
-                            tryFetch(word, published_word, 2)
-                            e.stopPropagation();
-                            published_word.removeEventListener('click', retry);
-                        };
-                        published_word.addEventListener('click', retry);
+                        queue.dequeue();
                     }
                 })
         }, 500);
@@ -273,17 +330,18 @@ function publishWord(word) {
     }
 
     let published_word = document.createElement('p');
-    published_word.setAttribute('class', 'score pending-score');
+    published_word.classList.add('score');
     published_word.setAttribute('id', id);
     scores.append(published_word);
     
     const escaped = escapeMissingLetters(word);
     if (escaped === null) {
         published_word.textContent = word;
-        tryFetch(word, published_word, 2);
+        published_word.classList.add('pending-score');
+        queue.enqueue({"word" : word, "published_word" : published_word});
     } else {
         published_word.innerHTML = escaped;
-        published_word.setAttribute('class', 'score failure');
+        published_word.classList.add('failure');
     }
 }
 
@@ -313,6 +371,13 @@ function reset(e) {
         e.currentTarget.removeEventListener('click', reset);
         delete e.currentTarget.tmr;
     }
+
+    queue.clear();
+
+    const resend_button = document.getElementById('resend');
+    resend_button.removeEventListener('click', resend);
+    const discailmer = document.getElementById('network-issues-disclaimer');
+    discailmer.classList.add('hidden');
 
     generateLetters();
 
