@@ -19,7 +19,7 @@ function isVowel(chr) {
 
 function createLetterDiv(letter) {
     let cell_div = document.createElement('div');
-    cell_div.setAttribute('class', 'hbox-nowrap cell');
+    cell_div.setAttribute('class', 'hbox-nowrap cell l-' + letter);
     cell_div.textContent = letter;
     return cell_div;
 }
@@ -211,7 +211,11 @@ function stopTimer(tmr) {
     word_input.value = '';
     word_input.classList.add('hidden');
     word_input.removeEventListener('keypress', handleWord);
-    
+    word_input.removeEventListener('beforeinput', handleBeforeInput);
+    word_input.removeEventListener('input', handleInput);
+
+    dehighlightLetters();
+
     // show results
     const results = document.getElementById('result');
     results.classList.remove('hidden');
@@ -350,19 +354,68 @@ function escapeRegExp(string) {
   return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
+function highlightLetter(letter) {
+    cell_div = document.querySelector('.l-' + letter + ':not(.highlighted)');
+    if (cell_div !== null) cell_div.classList.add('highlighted');
+}
+
+function dehighlightLetter(letter) {
+    cell_div = document.querySelector('.l-' + letter + '.highlighted');
+    if (cell_div !== null) cell_div.classList.remove('highlighted');
+}
+
+function dehighlightLetters() {
+    for (let cell_div of document.querySelectorAll('.highlighted')) {
+        cell_div.classList.remove('highlighted');
+    }
+}
+
+function filterNonAlphabetics(string) {
+    return string.replace(/[^a-zA-Z]+/g, '')
+}
+
+function redoLettersHighlighting() {
+    dehighlightLetters();
+    const word_input = document.getElementById('word');
+    const alphas = filterNonAlphabetics(word_input.value);
+    for (const alpha of alphas) {
+        highlightLetter(alpha);
+    }
+}
+
 function handleWord(e) {
-    switch(e.keyCode) {
-        case 13:
+    switch(e.key) {
+        case "Enter":
             const word_input = document.getElementById('word');
             const word_unescaped = new String(word_input.value);
             if (word_input.checkValidity() && word_unescaped.length > 2) {
                 word_input.value = '';
+                dehighlightLetters();
                 const word = escapeRegExp(word_unescaped.toLowerCase());
                 publishWord(word);
             }
             break;
     }
     e.stopPropagation();
+}
+
+function handleBeforeInput(e) {
+    const word_input = document.getElementById('word');
+    const begin = word_input.selectionStart;
+    const end = word_input.selectionEnd;
+    if (e.inputType === "insertText" && e.data !== null && begin !== end) {
+        const alphas = filterNonAlphabetics(word_input.value.substring(begin, end));
+        for (const alpha of alphas) dehighlightLetter(alpha);
+    }
+}
+
+function handleInput(e) {
+    if (e.inputType === 'insertText' && e.data !== null) {
+        const alphas = filterNonAlphabetics(e.data);
+        for (const alpha of alphas) highlightLetter(alpha);
+    } else {
+        redoLettersHighlighting();
+    }
 }
 
 function reset(e) {
@@ -384,6 +437,8 @@ function reset(e) {
     const word_input = document.getElementById('word');
     word_input.classList.remove('hidden');
     word_input.addEventListener('keypress', handleWord);
+    word_input.addEventListener('beforeinput', handleBeforeInput);
+    word_input.addEventListener('input', handleInput);
     word_input.focus();
     
     const results = document.getElementById('result');
