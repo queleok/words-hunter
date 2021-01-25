@@ -355,12 +355,12 @@ function escapeRegExp(string) {
 }
 
 function highlightLetter(letter) {
-    cell_div = document.querySelector('.l-' + letter + ':not(.highlighted)');
+    cell_div = document.querySelector('.l-' + letter.toLowerCase() + ':not(.highlighted)');
     if (cell_div !== null) cell_div.classList.add('highlighted');
 }
 
 function dehighlightLetter(letter) {
-    cell_div = document.querySelector('.l-' + letter + '.highlighted');
+    cell_div = document.querySelector('.l-' + letter.toLowerCase() + '.highlighted');
     if (cell_div !== null) cell_div.classList.remove('highlighted');
 }
 
