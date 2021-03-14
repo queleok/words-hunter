@@ -282,26 +282,36 @@ function escapeMissingLetters(word) {
     return ret;
 }
 
+function validateWord(data) {
+    for (let word of data) {
+        for (let meaning of word.meanings) {
+            const abbrev = meaning.definitions.every( def => def.definition.startsWith("short for "));
+            if (!abbrev && meaning.partOfSpeech !== "abbreviation") return true;
+        }
+    }
+    return false;
+}
+
 function tryFetch(word, published_word, attempts) {
     setTimeout(() => {
             fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + word)
                 .then(function(response) {
                     if (response.ok) {
-                        return true;
-                    } if (response.status === 404) {
-                        return Promise.reject(response.status);
-                    } else {
-                        return false;
-                    }
-                })
-                .then(function(status_ok) {
-                    if (status_ok) {
-                        published_word.setAttribute('class', 'score success');
-                        queue.dequeue();
+                        return response.json();
+                   } else if (response.status === 404) {
+                        return Promise.reject(404);
                     } else if (attempts <= 0) {
-                        Promise.reject(response.status);
+                        return Promise.reject(response.status);
                     } else
                         tryFetch(word, published_word, --attempts);
+                })
+                .then(function(data) {
+                    if (validateWord(data)) {
+                        published_word.setAttribute('class', 'score success');
+                        queue.dequeue();
+                    } else {
+                        return Promise.reject(404);
+                    }
                 })
                 .catch(function(error) {
                     if (error === 404) {
