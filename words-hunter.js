@@ -282,14 +282,14 @@ function escapeMissingLetters(word) {
     return ret;
 }
 
-function validateWord(data) {
-    for (let word of data) {
-        for (let meaning of word.meanings) {
-            const abbrev = meaning.definitions.every( def => def.definition.startsWith("short for "));
-            if (!abbrev && meaning.partOfSpeech !== "abbreviation") return true;
-        }
-    }
-    return false;
+function validateWord(words) {
+    const is_there_non_abbreviation = words.some( word =>
+        word.meanings.length == 0 
+        || !word.meanings.every( meaning =>
+            (meaning.partOfSpeech == "abbreviation")
+            || meaning.definitions.every( def =>
+                def.definition.startsWith("short for "))));
+    return is_there_non_abbreviation;
 }
 
 function tryFetch(word, published_word, attempts) {
