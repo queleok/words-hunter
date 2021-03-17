@@ -304,9 +304,12 @@ function tryFetch(word, published_word, attempts) {
                         return Promise.reject(response.status);
                     } else
                         tryFetch(word, published_word, --attempts);
+                    return null;
                 })
                 .then(function(data) {
-                    if (validateWord(data)) {
+                    if (data === null) {
+                        return;
+                    } else if (validateWord(data)) {
                         published_word.setAttribute('class', 'score success');
                         queue.dequeue();
                     } else {
