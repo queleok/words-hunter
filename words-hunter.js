@@ -1,3 +1,4 @@
+'use strict';
 let freqmap = Array(26).fill(0);
 const a_code = 'a'.charCodeAt(0);
 
@@ -368,7 +369,7 @@ function escapeRegExp(string) {
 }
 
 function highlightLetter(letter) {
-    cell_div = document.querySelector('.l-' + letter.toLowerCase() + ':not(.highlighted)');
+    const cell_div = document.querySelector('.l-' + letter.toLowerCase() + ':not(.highlighted)');
     if (cell_div !== null) cell_div.classList.add('highlighted');
 }
 
