@@ -83,14 +83,14 @@
     width: 0%;
     padding: 15%;
     margin: 5%;
-    background-image: url(refresh-arrow.svg);
+    background-image: url(icons/refresh-arrow.svg);
 }
 
 #resend {
     height: 0%;
     width: 0%;
     padding: 5%;
-    background-image: url(refresh-arrow.svg);
+    background-image: url(icons/refresh-arrow.svg);
 }
 
 .button {
@@ -124,7 +124,7 @@
 }
 
 .success::before {
-    background-image: url(correct-symbol.svg);
+    background-image: url(icons/correct-symbol.svg);
 }
 
 .pending-score {
@@ -141,7 +141,7 @@
 }
 
 [class*="pending-"]::before {
-    background-image: url(spinner-of-dots.svg);
+    background-image: url(icons/spinner-of-dots.svg);
     animation: spinning 2s linear infinite;
 }
 
@@ -168,7 +168,7 @@
 }
 
 .failure::before {
-    background-image: url(remove-symbol.svg);
+    background-image: url(icons/remove-symbol.svg);
 }
 
 .network-failure {
@@ -178,7 +178,7 @@
 }
 
 .network-failure::before {
-    background-image: url(refresh-arrow.svg);
+    background-image: url(icons/refresh-arrow.svg);
 }
 
 /* shamelessly copy-pasted from https://css-tricks.com/snippets/css/shake-css-keyframe-animation/ */
