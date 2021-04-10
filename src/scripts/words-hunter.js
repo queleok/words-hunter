@@ -25,7 +25,7 @@ function createLetterDiv(letter) {
     return cell_div;
 }
 
-function get_intervals(freqs) {
+function getIntervals(freqs) {
     const base_sum = freqs.reduce((accumulator, value) => accumulator + value);
     let ret = [...freqs];
     ret[0] /= base_sum;
@@ -62,7 +62,7 @@ function generateLetters() {
 
     let freqs = [...frequencies];
     let letters = [...letters_by_frequency];
-    let intervals = get_intervals(freqs);
+    let intervals = getIntervals(freqs);
 
     for (let i = 0; i < 16; i++) {
         const nmb = Math.random();
@@ -70,7 +70,7 @@ function generateLetters() {
         if ((i > 13) && (vowel_count < 3) && (freqs !== freqs_vowles)) {
             letters = vowels;
             freqs = freqs_vowles;
-            intervals = get_intervals(freqs);
+            intervals = getIntervals(freqs);
         }
 
         const lower_bound = (element) => element > nmb;
@@ -87,7 +87,7 @@ function generateLetters() {
                 vowels.splice(vowel_index, 1);
                 freqs_vowles.splice(vowel_index, 1);
             }
-            intervals = get_intervals(freqs);
+            intervals = getIntervals(freqs);
         }
 
         letters_div.append(createLetterDiv(letter));
