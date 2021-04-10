@@ -1,0 +1,38 @@
+{
+  "name": "words-hunter",
+  "version": "1.0.0",
+  "description": "Simple word game intended to help people learning English extend their vocabulary eventually",
+  "private": true,
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"There are no tests yet\"",
+    "deploy": "npm run make-site && git push origin `git subtree split --prefix site gh-pages`:gh-pages --force",
+    "make-js": "tsc",
+    "make-css": "sass src/styles/styles.scss site/styles.css",
+    "make-html": "mkdir -p site && cp -rf src/html/* site/",
+    "make-icons": "mkdir -p site/icons && cp -rf icons/* site/icons",
+    "make-site": "npm run make-icons && npm run make-html && npm run make-css && npm run make-js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/queleok/words-hunter.git"
+  },
+  "keywords": [
+    "game",
+    "word-game",
+    "learning",
+    "english"
+  ],
+  "author": "Leo K",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/queleok/words-hunter/issues"
+  },
+  "homepage": "https://github.com/queleok/words-hunter#readme",
+  "dependencies": {
+    "sass": "^1.32.8",
+    "typescript": "^4.2.3"
+  }
+}
