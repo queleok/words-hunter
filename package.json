@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"There are no tests yet\"",
-    "deploy": "npm run make-site && git push origin `git subtree split --prefix site gh-pages`:gh-pages --force",
+    "deploy": "npm run make-site; git branch -f gh-pages HEAD; git checkout gh-pages; git add -f site; git commit -m \"deploy\" --no-gpg-sign; git push origin `git subtree split --prefix site gh-pages`:gh-pages --force; git checkout main",
     "make-js": "tsc",
     "make-css": "sass src/styles/styles.scss site/styles.css",
     "make-html": "mkdir -p site && cp -rf src/html/* site/",
