@@ -46,48 +46,48 @@ function getIntervals(freqs) {
  * See docs/wiki100k-stats.ipynb for the rationale behind the implemented algorithm.
  */
 function generate() {
-    let freqmap = new Array(26).fill(0);
-    let lettersarr = new Array();
+    let alpha_count = new Array(26).fill(0);
+    let letters = new Array();
 
     let freqs_vowels = [...frequencies_vowels];
-    let vowels = [...vowels_by_frequency];
+    let vowel_by_freq = [...vowels_by_frequency];
     let vowel_count = 0;
 
     let freqs = [...frequencies];
-    let letters = [...letters_by_frequency];
+    let let_by_freq = [...letters_by_frequency];
     let intervals = getIntervals(freqs);
 
     for (let i = 0; i < 16; i++) {
         const nmb = Math.random();
         
         if ((i > 13) && (vowel_count < 3) && (freqs !== freqs_vowels)) {
-            letters = vowels;
+            let_by_freq = vowel_by_freq;
             freqs = freqs_vowels;
             intervals = getIntervals(freqs);
         }
 
         const lower_bound = (element) => element > nmb;
         const letter_index = intervals.findIndex(lower_bound);
-        const letter = letters[letter_index];
+        const letter = let_by_freq[letter_index];
         if (isVowel(letter)) ++vowel_count;
 
         const letter_order = getLetterOrdinalNumber(letter);
-        ++freqmap[letter_order];
+        ++alpha_count[letter_order];
 
-        if (freqmap[letter_order] === limits[letter_order]) {
-            letters.splice(letter_index, 1);
+        if (alpha_count[letter_order] === limits[letter_order]) {
+            let_by_freq.splice(letter_index, 1);
             freqs.splice(letter_index, 1);
-            let vowel_index = vowels.indexOf(letter);
+            let vowel_index = vowel_by_freq.indexOf(letter);
             if (vowel_index >= 0) {
-                vowels.splice(vowel_index, 1);
+                vowel_by_freq.splice(vowel_index, 1);
                 freqs_vowels.splice(vowel_index, 1);
             }
             intervals = getIntervals(freqs);
         }
 
-        lettersarr.push(letter);
+        letters.push(letter);
     }
-    return { 'freqs': freqmap, 'letters': lettersarr };
+    return { alpha_count, letters };
 }
 
 export { generate, getLetterOrdinalNumber };

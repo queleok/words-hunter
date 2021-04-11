@@ -15,8 +15,8 @@ function generateLetters() {
     const letters_div = document.getElementById('letters');
     letters_div.textContent = '';
     
-    const {freqs, letters} = generate();
-    freqmap = freqs;
+    const {alpha_count, letters} = generate();
+    freqmap = alpha_count;
     
     for (const letter of letters) {
         letters_div.append(createLetterDiv(letter));
