@@ -1,6 +1,7 @@
 'use strict';
 
-import { generate, getLetterOrdinalNumber } from './generate-letters.js';
+import { generate } from './generate-letters.js';
+import { formatTime, formatResult, escapeMissingLetters, escapeRegExp, filterNonAlphabetics } from './format.js';
 
 let freqmap = Array(26).fill(0);
 
@@ -93,25 +94,6 @@ function resend(e) {
     e.stopPropagation();
 }
 
-function formatTimeSlot(amount) {
-    amount = Math.floor(amount);
-    if      (amount < 0) return '00';
-    else if (amount < 10) return '0' + amount;
-    return '' + amount;
-}
-
-function renderTime(sec) {
-    let mins = Math.floor(sec / 60);
-    let secs = sec - mins * 60;
-    return formatTimeSlot(mins) + ':' + formatTimeSlot(secs);
-}
-
-function renderResult(res) {
-    if (res < 10) return '  ' + res;
-    else if (res < 100) return ' ' + res;
-    return res;
-}
-
 function reportResults() {
     let res = 0;
     const successElements = document.getElementsByClassName('success');
@@ -121,7 +103,7 @@ function reportResults() {
     }
     const results = document.getElementById('result');
     results.classList.remove('pending-result');
-    results.textContent = 'Result: ' + renderResult(res);
+    results.textContent = 'Result: ' + formatResult(res);
 
     const failed_words = document.querySelectorAll('.network-failure');
     if (failed_words.length > 0) {
@@ -161,7 +143,7 @@ function startTimer(minutes) {
     const left = document.createElement('p');
     left.setAttribute('id', 'timeleft');
     let sec = Math.floor(minutes * 60);
-    left.textContent = renderTime(sec);
+    left.textContent = formatTime(sec);
 
     const timer_div = document.getElementById('timer');
     timer_div.textContent = '';
@@ -173,40 +155,10 @@ function startTimer(minutes) {
             return;
         }
         --sec;
-        left.textContent = renderTime(sec);
+        left.textContent = formatTime(sec);
     }, 1000);
 
     return tmr;
-}
-
-function escapeMissingLetters(word) {
-    const freq = [...freqmap];
-    
-    let valid = true;
-
-    let ret = '';
-    let open = '<s>';
-    let close = '';
-
-    for (let i = 0; i < word.length; i++) {
-        const chr = word.charAt(i);
-        if (--freq[getLetterOrdinalNumber(chr)] < 0) {
-            valid = false;
-            ret += open + chr;
-            open = '';
-            close = '</s>';
-        } else {
-            ret += close + chr;
-            open = '<s>';
-            close = '';
-        }
-    }
-
-    ret += close;
-
-    if (valid) ret = null;
-
-    return ret;
 }
 
 function validateWord(words) {
@@ -278,7 +230,7 @@ function publishWord(word) {
     published_word.setAttribute('id', id);
     scores.append(published_word);
     
-    const escaped = escapeMissingLetters(word);
+    const escaped = escapeMissingLetters(word, freqmap);
     if (escaped === null) {
         published_word.textContent = word;
         published_word.classList.add('pending-score');
@@ -287,11 +239,6 @@ function publishWord(word) {
         published_word.innerHTML = escaped;
         published_word.classList.add('failure');
     }
-}
-
-// shamelessly copy-pasted from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#Escaping
-function escapeRegExp(string) {
-  return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
 function highlightLetter(letter) {
@@ -308,10 +255,6 @@ function dehighlightLetters() {
     for (let cell_div of document.querySelectorAll('.highlighted')) {
         cell_div.classList.remove('highlighted');
     }
-}
-
-function filterNonAlphabetics(string) {
-    return string.replace(/[^a-zA-Z]+/g, '')
 }
 
 function redoLettersHighlighting() {
