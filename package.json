@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "echo \"There are no tests yet\"",
+    "serve": "npx http-server site",
     "deploy": "npm run make-site; git branch -f gh-pages HEAD; git checkout gh-pages; git add -f site; git commit -m \"deploy\" --no-gpg-sign; git push origin `git subtree split --prefix site gh-pages`:gh-pages --force; git checkout main",
     "make-js": "tsc",
     "make-css": "sass src/styles/styles.scss site/styles.css",
@@ -31,8 +32,9 @@
     "url": "https://github.com/queleok/words-hunter/issues"
   },
   "homepage": "https://github.com/queleok/words-hunter#readme",
-  "dependencies": {
+  "devDependencies": {
+    "http-server": "^0.12.3",
     "sass": "^1.32.8",
-    "typescript": "^4.2.3"
+    "typescript": "^4.2.4"
   }
 }

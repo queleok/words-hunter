@@ -1,22 +1,8 @@
 'use strict';
+
+import { generate, getLetterOrdinalNumber } from './generate-letters.js';
+
 let freqmap = Array(26).fill(0);
-const a_code = 'a'.charCodeAt(0);
-
-// Letters frequency according to Cornwell University Math Explorer's Project:
-// http://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
-const letters_by_frequency = ['e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'h', 'd', 'l', 'u', 'c', 'm', 'f', 'y', 'w', 'g', 'p', 'b', 'v', 'k', 'x', 'q', 'j', 'z' ];
-const frequencies = [12.02, 9.10, 8.12, 7.68, 7.31, 6.95, 6.28, 6.02, 5.92, 4.32, 3.98, 2.88, 2.71, 2.61, 2.30, 2.11, 2.09, 2.03, 1.82, 1.49, 1.11, 0.69, 0.17, 0.11, 0.10, 0.07];
-
-// Vowels frequency in 14+-letter words from the 100k wiktionary (see docs for more info)
-const vowels_by_frequency = ['i', 'e', 'a', 'o', 'u', 'y'];
-const frequencies_vowels = [ 0.280220, 0.260504, 0.174855, 0.162250, 0.086296, 0.035876 ];
-
-//               a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z
-const limits = [ 3, 2, 2, 2, 3, 2, 2, 2, 3, 1, 2, 3, 2, 3, 3, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2 ];
-
-function isVowel(chr) {
-    return vowels_by_frequency.indexOf(chr) !== -1;
-}
 
 function createLetterDiv(letter) {
     let cell_div = document.createElement('div');
@@ -25,71 +11,14 @@ function createLetterDiv(letter) {
     return cell_div;
 }
 
-function getIntervals(freqs) {
-    const base_sum = freqs.reduce((accumulator, value) => accumulator + value);
-    let ret = [...freqs];
-    ret[0] /= base_sum;
-    for (let i = 1; i < freqs.length; i++) {
-        ret[i] /= base_sum;
-        ret[i] += ret[i - 1];
-    }
-    return ret;
-}
-
-/**
- * Shortly put, frequencies are normalized to their sum and are used to divide
- * the interval [0.0, 1.0] into 26 (initially) sub-intervals with widths proportioanl
- * to their value (the bigger the frequency, the wider the sub-interval). Maximal
- * limits of repetitions are posed on letters based on 99-th percentile in the
- * distribution of letters built from the 100k words from the wiki dictionary.
- * When the limit is reached, the letter is removed from the array of elements to be
- * considered, and sub-intervals are re-built from the remaining elements. If there
- * are less than 3 vowels after generation of the first 13 letters, the last three
- * letters will be generated from vowels only based on their distribution in long
- * words (14+ letters).
- * 
- * See docs/wiki100k-stats.ipynb for the rationale behind the implemented algorithm.
- */
 function generateLetters() {
     const letters_div = document.getElementById('letters');
     letters_div.textContent = '';
     
-    freqmap = Array(26).fill(0);
-
-    let freqs_vowles = [...frequencies_vowels];
-    let vowels = [...vowels_by_frequency];
-    let vowel_count = 0;
-
-    let freqs = [...frequencies];
-    let letters = [...letters_by_frequency];
-    let intervals = getIntervals(freqs);
-
-    for (let i = 0; i < 16; i++) {
-        const nmb = Math.random();
-        
-        if ((i > 13) && (vowel_count < 3) && (freqs !== freqs_vowles)) {
-            letters = vowels;
-            freqs = freqs_vowles;
-            intervals = getIntervals(freqs);
-        }
-
-        const lower_bound = (element) => element > nmb;
-        const letter_index = intervals.findIndex(lower_bound);
-        const letter = letters[letter_index];
-        if (isVowel(letter)) ++vowel_count;
-        ++freqmap[letter.charCodeAt(0) - a_code];
-
-        if (freqmap[letter.charCodeAt(0) - a_code] === limits[letter.charCodeAt(0) - a_code]) {
-            letters.splice(letter_index, 1);
-            freqs.splice(letter_index, 1);
-            let vowel_index = vowels.indexOf(letter);
-            if (vowel_index >= 0) {
-                vowels.splice(vowel_index, 1);
-                freqs_vowles.splice(vowel_index, 1);
-            }
-            intervals = getIntervals(freqs);
-        }
-
+    const {freqs, letters} = generate();
+    freqmap = freqs;
+    
+    for (const letter of letters) {
         letters_div.append(createLetterDiv(letter));
     }
 }
@@ -208,7 +137,7 @@ function stopTimer(tmr) {
     clearInterval(tmr);
 
     // hide input & disable event listening for it
-    const word_input = document.getElementById('word');
+    const word_input = document.getElementById('word') as HTMLInputElement;
     word_input.value = '';
     word_input.classList.add('hidden');
     word_input.removeEventListener('keypress', handleWord);
@@ -246,11 +175,8 @@ function startTimer(minutes) {
         --sec;
         left.textContent = renderTime(sec);
     }, 1000);
-    
-    // show play again button
-    const again = document.getElementById('again');
-    again.addEventListener('click', reset);
-    again.tmr = tmr;
+
+    return tmr;
 }
 
 function escapeMissingLetters(word) {
@@ -264,7 +190,7 @@ function escapeMissingLetters(word) {
 
     for (let i = 0; i < word.length; i++) {
         const chr = word.charAt(i);
-        if (--freq[word.charCodeAt(i) - a_code] < 0) {
+        if (--freq[getLetterOrdinalNumber(chr)] < 0) {
             valid = false;
             ret += open + chr;
             open = '';
@@ -374,7 +300,7 @@ function highlightLetter(letter) {
 }
 
 function dehighlightLetter(letter) {
-    cell_div = document.querySelector('.l-' + letter.toLowerCase() + '.highlighted');
+    const cell_div = document.querySelector('.l-' + letter.toLowerCase() + '.highlighted');
     if (cell_div !== null) cell_div.classList.remove('highlighted');
 }
 
@@ -390,7 +316,7 @@ function filterNonAlphabetics(string) {
 
 function redoLettersHighlighting() {
     dehighlightLetters();
-    const word_input = document.getElementById('word');
+    const word_input = document.getElementById('word') as HTMLInputElement;
     const alphas = filterNonAlphabetics(word_input.value);
     for (const alpha of alphas) {
         highlightLetter(alpha);
@@ -400,7 +326,7 @@ function redoLettersHighlighting() {
 function handleWord(e) {
     switch(e.key) {
         case "Enter":
-            const word_input = document.getElementById('word');
+            const word_input = document.getElementById('word') as HTMLInputElement;
             const word_unescaped = new String(word_input.value);
             if (word_input.checkValidity() && word_unescaped.length > 2) {
                 word_input.value = '';
@@ -414,7 +340,7 @@ function handleWord(e) {
 }
 
 function handleBeforeInput(e) {
-    const word_input = document.getElementById('word');
+    const word_input = document.getElementById('word') as HTMLInputElement;
     const begin = word_input.selectionStart;
     const end = word_input.selectionEnd;
     if (e.inputType === "insertText" && e.data !== null && begin !== end) {
@@ -432,13 +358,7 @@ function handleInput(e) {
     }
 }
 
-function reset(e) {
-    if (e != null && e.currentTarget.tmr != null) {
-        stopTimer(e.currentTarget.tmr);
-        e.currentTarget.removeEventListener('click', reset);
-        delete e.currentTarget.tmr;
-    }
-
+function reset() {
     queue.clear();
 
     const resend_button = document.getElementById('resend');
@@ -454,16 +374,20 @@ function reset(e) {
     word_input.addEventListener('beforeinput', handleBeforeInput);
     word_input.addEventListener('input', handleInput);
     word_input.focus();
-    
+
     const results = document.getElementById('result');
     results.textContent = 'Result:  ';
     results.classList.add('hidden');
     results.classList.remove('pending-result');
-    
+
     const scores = document.getElementById('scores');
     scores.textContent = '';
 
-    startTimer(2);
+    const tmr = startTimer(2);
+
+    const again = document.getElementById('again');
+    const once = { once : true };
+    again.addEventListener('click', (event) => { stopTimer(tmr); reset() }, once );
 }
 
 window.addEventListener('load', function () {
