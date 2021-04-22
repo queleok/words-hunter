@@ -5,7 +5,7 @@ import { formatTime, formatResult, escapeMissingLetters, escapeRegExp, filterNon
 
 let freqmap = Array(26).fill(0);
 
-function createLetterDiv(letter) {
+function createLetterDiv(letter: string) {
     let cell_div = document.createElement('div');
     cell_div.setAttribute('class', 'hbox-nowrap cell l-' + letter);
     cell_div.textContent = letter;
@@ -14,81 +14,89 @@ function createLetterDiv(letter) {
 
 function generateLetters() {
     const letters_div = document.getElementById('letters');
-    letters_div.textContent = '';
+    letters_div!.textContent = '';
     
     const {alpha_count, letters} = generate();
     freqmap = alpha_count;
     
     for (const letter of letters) {
-        letters_div.append(createLetterDiv(letter));
+        letters_div!.append(createLetterDiv(letter));
     }
 }
 
+type Item = {
+    word: string,
+    published_word: Element
+}
+
+type Node = {
+    item: Item,
+    next: Node | null
+}
+
 const queue = {
-    "begin" : null,
-    "end" : null,
-    "length" : 0,
-    "enqueue" : function(item) {
-        const node = {
-            "item" : item,
-            "next" : null
+    begin: null as Node | null,
+    end: null as Node | null,
+    length: 0,
+    enqueue: function(item: Item) {
+        const node: Node | null = {
+            item: item,
+            next: null
         };
         if (this.begin === null) {
             this.begin = node;
             this.end = this.begin;
         } else {
-            this.end.next = node;
-            this.end = this.end.next;
+            this.end!.next = node;
+            this.end = this.end!.next;
         }
         this.length++;
 
         if (this.length === 1) tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
     },
-    "dequeue" : function() {
+    dequeue : function() {
         if (this.length === 0) {
             console.log('attempt to dequeue empty queue');
             return;
         }
 
         if (this.length === 1) {
-            this.begin = null;
-            this.end = null;
-            this.length = 0;
+            this.clear();
             const results = document.getElementById('result');
-            if (results.classList.contains('pending-result')) reportResults();
+            if (results!.classList.contains('pending-result')) reportResults();
             return;
         }
 
         this.length--;
-        this.begin = this.begin.next;
-        tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
+        this.begin = this.begin!.next;
+        tryFetch(this.begin!.item.word, this.begin!.item.published_word, 2);
     },
-    "clear" : function() {
+    clear : function() {
         this.begin = null;
         this.end = null;
         this.length = 0;
     }
 };
 
-function resend(e) {
+function resend(e: Event) {
     const button = document.getElementById('resend');
-    button.removeEventListener('click', resend);
+    button!.removeEventListener('click', resend);
 
     const failed_words = document.querySelectorAll('.network-failure');
     if (failed_words.length > 0) {
         const results = document.getElementById('result');
-        results.classList.add('pending-result');
-        results.textContent = "Result:  ";
+        results!.classList.add('pending-result');
+        results!.textContent = "Result:  ";
 
-        const discailmer = document.getElementById('network-issues-disclaimer');
-        discailmer.classList.add('hidden');
+        const disclaimer = document.getElementById('network-issues-disclaimer');
+        disclaimer!.classList.add('hidden');
     }
 
     for (const word of failed_words) {
         word.classList.remove('network-failure');
         word.classList.add('pending-score');
 
-        queue.enqueue({"word" : word.textContent, "published_word" : word});
+        queue.enqueue({ word: '' + word.textContent, published_word: word });
     }
 
     e.stopPropagation();
@@ -99,22 +107,22 @@ function reportResults() {
     const successElements = document.getElementsByClassName('success');
     for (const element of successElements) {
         const word = element.textContent;
-        res += word.length - 2;
+        res += word!.length - 2;
     }
     const results = document.getElementById('result');
-    results.classList.remove('pending-result');
-    results.textContent = 'Result: ' + formatResult(res);
+    results!.classList.remove('pending-result');
+    results!.textContent = 'Result: ' + formatResult(res);
 
     const failed_words = document.querySelectorAll('.network-failure');
     if (failed_words.length > 0) {
-        const discailmer = document.getElementById('network-issues-disclaimer');
-        discailmer.classList.remove('hidden');
+        const disclaimer = document.getElementById('network-issues-disclaimer');
+        disclaimer!.classList.remove('hidden');
         const resend_button = document.getElementById('resend');
-        resend_button.addEventListener('click', resend);
+        resend_button!.addEventListener('click', resend);
     }
 }
 
-function stopTimer(tmr) {
+function stopTimer(tmr: number) {
     // stop timer
     clearInterval(tmr);
 
@@ -130,24 +138,19 @@ function stopTimer(tmr) {
 
     // show results
     const results = document.getElementById('result');
-    results.classList.remove('hidden');
+    results!.classList.remove('hidden');
 
     if (queue.length === 0) {
         reportResults();
     } else {
-        results.classList.add('pending-result');
+        results!.classList.add('pending-result');
     }
 }
 
-function startTimer(minutes) {
-    const left = document.createElement('p');
-    left.setAttribute('id', 'timeleft');
+function startTimer(minutes: number) {
+    const left = document.getElementById('timeleft');
     let sec = Math.floor(minutes * 60);
-    left.textContent = formatTime(sec);
-
-    const timer_div = document.getElementById('timer');
-    timer_div.textContent = '';
-    timer_div.append(left);
+    left!.textContent = formatTime(sec);
 
     let tmr = setInterval(() => {
         if (sec === 0) {
@@ -155,14 +158,27 @@ function startTimer(minutes) {
             return;
         }
         --sec;
-        left.textContent = formatTime(sec);
+        left!.textContent = formatTime(sec);
     }, 1000);
 
     return tmr;
 }
 
-function validateWord(words) {
-    const is_there_non_abbreviation = words.some( word =>
+interface Definition {
+    definition: string
+}
+
+interface Meaning {
+    partOfSpeech: string,
+    definitions: Array<Definition>
+}
+
+interface Word {
+    meanings: Array<Meaning>
+}
+
+function validateWord(words: Array<Word>) {
+    const is_there_non_abbreviation = words.some( (word: Word) =>
         word.meanings.length == 0 
         || !word.meanings.every( meaning =>
             (meaning.partOfSpeech == "abbreviation")
@@ -171,7 +187,7 @@ function validateWord(words) {
     return is_there_non_abbreviation;
 }
 
-function tryFetch(word, published_word, attempts) {
+function tryFetch(word: string, published_word: Element, attempts: number) {
     setTimeout(() => {
             fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + word)
                 .then(function(response) {
@@ -208,7 +224,7 @@ function tryFetch(word, published_word, attempts) {
         }, 500);
 }
 
-function publishWord(word) {
+function publishWord(word: string | null) {
     if (word === null || word.length < 2)
         return;
 
@@ -216,8 +232,8 @@ function publishWord(word) {
     const found_word = document.getElementById(id);
     const scores = document.getElementById('scores');
     if (undefined != found_word) {
-        scores.removeChild(found_word);
-        scores.append(found_word);
+        scores!.removeChild(found_word);
+        scores!.append(found_word);
         found_word.classList.add('moved');
         setTimeout(() => {
             found_word.classList.remove('moved');
@@ -228,25 +244,25 @@ function publishWord(word) {
     let published_word = document.createElement('p');
     published_word.classList.add('score');
     published_word.setAttribute('id', id);
-    scores.append(published_word);
+    scores!.append(published_word);
     
     const escaped = escapeMissingLetters(word, freqmap);
     if (escaped === null) {
         published_word.textContent = word;
         published_word.classList.add('pending-score');
-        queue.enqueue({"word" : word, "published_word" : published_word});
+        queue.enqueue({ word: word, published_word: published_word });
     } else {
         published_word.innerHTML = escaped;
         published_word.classList.add('failure');
     }
 }
 
-function highlightLetter(letter) {
+function highlightLetter(letter: string) {
     const cell_div = document.querySelector('.l-' + letter.toLowerCase() + ':not(.highlighted)');
     if (cell_div !== null) cell_div.classList.add('highlighted');
 }
 
-function dehighlightLetter(letter) {
+function dehighlightLetter(letter: string) {
     const cell_div = document.querySelector('.l-' + letter.toLowerCase() + '.highlighted');
     if (cell_div !== null) cell_div.classList.remove('highlighted');
 }
@@ -260,19 +276,19 @@ function dehighlightLetters() {
 function redoLettersHighlighting() {
     dehighlightLetters();
     const word_input = document.getElementById('word') as HTMLInputElement;
-    const alphas = filterNonAlphabetics(word_input.value);
+    const alphas = filterNonAlphabetics(word_input!.value);
     for (const alpha of alphas) {
         highlightLetter(alpha);
     }
 }
 
-function handleWord(e) {
-    switch(e.key) {
+function handleWord(e: Event) {
+    switch((e as KeyboardEvent).key) {
         case "Enter":
             const word_input = document.getElementById('word') as HTMLInputElement;
             const word_unescaped = new String(word_input.value);
-            if (word_input.checkValidity() && word_unescaped.length > 2) {
-                word_input.value = '';
+            if (word_input!.checkValidity() && word_unescaped.length > 2) {
+                word_input!.value = '';
                 dehighlightLetters();
                 const word = escapeRegExp(word_unescaped.toLowerCase());
                 publishWord(word);
@@ -282,19 +298,19 @@ function handleWord(e) {
     e.stopPropagation();
 }
 
-function handleBeforeInput(e) {
+function handleBeforeInput(e: Event) {
     const word_input = document.getElementById('word') as HTMLInputElement;
-    const begin = word_input.selectionStart;
-    const end = word_input.selectionEnd;
-    if (e.inputType === "insertText" && e.data !== null && begin !== end) {
-        const alphas = filterNonAlphabetics(word_input.value.substring(begin, end));
+    const begin = word_input!.selectionStart!;
+    const end = word_input!.selectionEnd!;
+    if ((e as InputEvent).inputType === "insertText" && (e as InputEvent).data !== null && begin !== end) {
+        const alphas = filterNonAlphabetics(word_input!.value.substring(begin, end));
         for (const alpha of alphas) dehighlightLetter(alpha);
     }
 }
 
-function handleInput(e) {
-    if (e.inputType === 'insertText' && e.data !== null) {
-        const alphas = filterNonAlphabetics(e.data);
+function handleInput(e: Event) {
+    if ((e as InputEvent).inputType === 'insertText' && (e as InputEvent).data !== null) {
+        const alphas = filterNonAlphabetics((e as InputEvent).data!);
         for (const alpha of alphas) highlightLetter(alpha);
     } else {
         redoLettersHighlighting();
@@ -305,32 +321,32 @@ function reset() {
     queue.clear();
 
     const resend_button = document.getElementById('resend');
-    resend_button.removeEventListener('click', resend);
-    const discailmer = document.getElementById('network-issues-disclaimer');
-    discailmer.classList.add('hidden');
+    resend_button!.removeEventListener('click', resend);
+    const disclaimer = document.getElementById('network-issues-disclaimer');
+    disclaimer!.classList.add('hidden');
 
     generateLetters();
 
     const word_input = document.getElementById('word');
-    word_input.classList.remove('hidden');
-    word_input.addEventListener('keypress', handleWord);
-    word_input.addEventListener('beforeinput', handleBeforeInput);
-    word_input.addEventListener('input', handleInput);
-    word_input.focus();
+    word_input!.classList.remove('hidden');
+    word_input!.addEventListener('keypress', handleWord);
+    word_input!.addEventListener('beforeinput', handleBeforeInput);
+    word_input!.addEventListener('input', handleInput);
+    word_input!.focus();
 
     const results = document.getElementById('result');
-    results.textContent = 'Result:  ';
-    results.classList.add('hidden');
-    results.classList.remove('pending-result');
+    results!.textContent = 'Result:  ';
+    results!.classList.add('hidden');
+    results!.classList.remove('pending-result');
 
     const scores = document.getElementById('scores');
-    scores.textContent = '';
+    scores!.textContent = '';
 
     const tmr = startTimer(2);
 
     const again = document.getElementById('again');
     const once = { once : true };
-    again.addEventListener('click', (event) => { stopTimer(tmr); reset() }, once );
+    again!.addEventListener('click', (event) => { stopTimer(tmr); reset() }, once );
 }
 
 window.addEventListener('load', function () {

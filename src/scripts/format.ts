@@ -1,30 +1,30 @@
 import { getLetterOrdinalNumber } from './generate-letters.js'
 
-function formatTimeSlot(amount) {
+function formatTimeSlot(amount: number) {
     amount = Math.floor(amount);
     if      (amount < 0) return '00';
     else if (amount < 10) return '0' + amount;
     return '' + amount;
 }
 
-function formatTime(sec) {
+function formatTime(sec: number) {
     let mins = Math.floor(sec / 60);
     let secs = sec - mins * 60;
     return formatTimeSlot(mins) + ':' + formatTimeSlot(secs);
 }
 
-function formatResult(res) {
+function formatResult(res: number) {
     if (res < 10) return '  ' + res;
     else if (res < 100) return ' ' + res;
     return res;
 }
 
-function escapeMissingLetters(word, freqmap) {
+function escapeMissingLetters(word: string, freqmap: Array<number>) {
     const freq = [...freqmap];
     
     let valid = true;
 
-    let ret = '';
+    let ret: string | null  = '';
     let open = '<s>';
     let close = '';
 
@@ -50,12 +50,12 @@ function escapeMissingLetters(word, freqmap) {
 }
 
 // shamelessly copy-pasted from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#Escaping
-function escapeRegExp(string) {
-    return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+function escapeRegExp(str: string) {
+    return str.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
-function filterNonAlphabetics(string) {
-    return string.replace(/[^a-zA-Z]+/g, '')
+function filterNonAlphabetics(str: string) {
+    return str.replace(/[^a-zA-Z]+/g, '')
 }
 
 export { formatTime, formatResult, escapeMissingLetters, escapeRegExp, filterNonAlphabetics };

@@ -1,6 +1,6 @@
 const a_code = 'a'.charCodeAt(0);
 
-function getLetterOrdinalNumber(letter) {
+function getLetterOrdinalNumber(letter: string) {
     return letter.charCodeAt(0) - a_code;
 }
 
@@ -16,12 +16,12 @@ const frequencies_vowels = [ 0.280220, 0.260504, 0.174855, 0.162250, 0.086296, 0
 //               a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z
 const limits = [ 3, 2, 2, 2, 3, 2, 2, 2, 3, 1, 2, 3, 2, 3, 3, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2 ];
 
-function isVowel(chr) {
+function isVowel(chr: string) {
     return vowels_by_frequency.indexOf(chr) !== -1;
 }
 
-function getIntervals(freqs) {
-    const base_sum = freqs.reduce((accumulator, value) => accumulator + value);
+function getIntervals(freqs: Array<number>) {
+    const base_sum = freqs.reduce((accumulator: number, value: number) => accumulator + value);
     let ret = [...freqs];
     ret[0] /= base_sum;
     for (let i = 1; i < freqs.length; i++) {
@@ -66,7 +66,7 @@ function generate() {
             intervals = getIntervals(freqs);
         }
 
-        const lower_bound = (element) => element > nmb;
+        const lower_bound = (element: number) => element > nmb;
         const letter_index = intervals.findIndex(lower_bound);
         const letter = let_by_freq[letter_index];
         if (isVowel(letter)) ++vowel_count;
