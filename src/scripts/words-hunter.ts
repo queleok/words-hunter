@@ -54,7 +54,7 @@ const queue = {
 
         if (this.length === 1) tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
     },
-    dequeue : function() {
+    dequeue: function() {
         if (this.length === 0) {
             console.log('attempt to dequeue empty queue');
             return;
@@ -71,7 +71,7 @@ const queue = {
         this.begin = this.begin!.next;
         tryFetch(this.begin!.item.word, this.begin!.item.published_word, 2);
     },
-    clear : function() {
+    clear: function() {
         this.begin = null;
         this.end = null;
         this.length = 0;
