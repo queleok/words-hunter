@@ -2,8 +2,10 @@
 
 import { generate } from './generate-letters.js';
 import { formatTime, formatResult, escapeMissingLetters, escapeRegExp, filterNonAlphabetics } from './format.js';
+import { PromiseQueue, FetchResult } from './queue.js';
 
 let freqmap = Array(26).fill(0);
+let queue = new PromiseQueue();
 
 function createLetterDiv(letter: string) {
     let cell_div = document.createElement('div');
@@ -24,59 +26,22 @@ function generateLetters() {
     }
 }
 
-type Item = {
-    word: string,
-    published_word: Element
-}
-
-type Node = {
-    item: Item,
-    next: Node | null
-}
-
-const queue = {
-    begin: null as Node | null,
-    end: null as Node | null,
-    length: 0,
-    enqueue: function(item: Item) {
-        const node: Node | null = {
-            item: item,
-            next: null
-        };
-        if (this.begin === null) {
-            this.begin = node;
-            this.end = this.begin;
-        } else {
-            this.end!.next = node;
-            this.end = this.end!.next;
+function getFetchResultHandler(word: Element) {
+    return (fetch_result: FetchResult) => {
+        switch (fetch_result) {
+            case "success":
+                word.setAttribute('class', 'score success');
+                break;
+            case "validation-failure":
+            case "no-definition":
+                word.setAttribute('class', 'score failure');
+                break;
+            case "network-failure":
+                word.setAttribute('class', 'score network-failure');
+                break;
         }
-        this.length++;
-
-        if (this.length === 1) tryFetch(this.begin.item.word, this.begin.item.published_word, 2);
-    },
-    dequeue: function() {
-        if (this.length === 0) {
-            console.log('attempt to dequeue empty queue');
-            return;
-        }
-
-        if (this.length === 1) {
-            this.clear();
-            const results = document.getElementById('result');
-            if (results!.classList.contains('pending-result')) reportResults();
-            return;
-        }
-
-        this.length--;
-        this.begin = this.begin!.next;
-        tryFetch(this.begin!.item.word, this.begin!.item.published_word, 2);
-    },
-    clear: function() {
-        this.begin = null;
-        this.end = null;
-        this.length = 0;
     }
-};
+}
 
 function resend(e: Event) {
     const button = document.getElementById('resend');
@@ -96,22 +61,21 @@ function resend(e: Event) {
         word.classList.remove('network-failure');
         word.classList.add('pending-score');
 
-        queue.enqueue({ word: '' + word.textContent, published_word: word });
+        queue.enqueue('' + word.textContent).then(getFetchResultHandler(word));
     }
 
     e.stopPropagation();
 }
 
-function reportResults() {
+function reportResults(results: Element) {
     let res = 0;
     const successElements = document.getElementsByClassName('success');
     for (const element of successElements) {
         const word = element.textContent;
         res += word!.length - 2;
     }
-    const results = document.getElementById('result');
-    results!.classList.remove('pending-result');
-    results!.textContent = 'Result: ' + formatResult(res);
+    results.classList.remove('pending-result');
+    results.textContent = 'Result: ' + formatResult(res);
 
     const failed_words = document.querySelectorAll('.network-failure');
     if (failed_words.length > 0) {
@@ -139,12 +103,9 @@ function stopTimer(tmr: number) {
     // show results
     const results = document.getElementById('result');
     results!.classList.remove('hidden');
+    results!.classList.add('pending-result');
 
-    if (queue.length === 0) {
-        reportResults();
-    } else {
-        results!.classList.add('pending-result');
-    }
+    queue.deplete(() => { reportResults(results!); });
 }
 
 function startTimer(minutes: number) {
@@ -162,66 +123,6 @@ function startTimer(minutes: number) {
     }, 1000);
 
     return tmr;
-}
-
-interface Definition {
-    definition: string
-}
-
-interface Meaning {
-    partOfSpeech: string,
-    definitions: Array<Definition>
-}
-
-interface Word {
-    meanings: Array<Meaning>
-}
-
-function validateWord(words: Array<Word>) {
-    const is_there_non_abbreviation = words.some( (word: Word) =>
-        word.meanings.length == 0 
-        || !word.meanings.every( meaning =>
-            (meaning.partOfSpeech == "abbreviation")
-            || meaning.definitions.every( def =>
-                def.definition.startsWith("short for "))));
-    return is_there_non_abbreviation;
-}
-
-function tryFetch(word: string, published_word: Element, attempts: number) {
-    setTimeout(() => {
-            fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + word)
-                .then(function(response) {
-                    if (response.ok) {
-                        return response.json();
-                   } else if (response.status === 404) {
-                        return Promise.reject(404);
-                    } else if (attempts <= 0) {
-                        return Promise.reject(response.status);
-                    } else
-                        tryFetch(word, published_word, --attempts);
-                    return null;
-                })
-                .then(function(data) {
-                    if (data === null) {
-                        return;
-                    } else if (validateWord(data)) {
-                        published_word.setAttribute('class', 'score success');
-                        queue.dequeue();
-                    } else {
-                        return Promise.reject(404);
-                    }
-                })
-                .catch(function(error) {
-                    if (error === 404) {
-                        published_word.setAttribute('class', 'score failure');
-                        queue.dequeue();
-                    } else {
-                        console.log('Failed to resolve word "' + word + '" due to network issues, error: ' + error);
-                        published_word.setAttribute('class', 'score network-failure');
-                        queue.dequeue();
-                    }
-                })
-        }, 500);
 }
 
 function publishWord(word: string | null) {
@@ -250,7 +151,7 @@ function publishWord(word: string | null) {
     if (escaped === null) {
         published_word.textContent = word;
         published_word.classList.add('pending-score');
-        queue.enqueue({ word: word, published_word: published_word });
+        queue.enqueue(word).then(getFetchResultHandler(published_word));
     } else {
         published_word.innerHTML = escaped;
         published_word.classList.add('failure');
@@ -318,7 +219,8 @@ function handleInput(e: Event) {
 }
 
 function reset() {
-    queue.clear();
+    queue.deplete(() => { console.log("old queue depleted"); });
+    queue = new PromiseQueue();
 
     const resend_button = document.getElementById('resend');
     resend_button!.removeEventListener('click', resend);
