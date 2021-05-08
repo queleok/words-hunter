@@ -24,7 +24,7 @@ function escapeMissingLetters(word: string, freqmap: Array<number>) {
     
     let valid = true;
 
-    let ret: string | null  = '';
+    let ret = '';
     let open = '<s>';
     let close = '';
 
@@ -42,10 +42,9 @@ function escapeMissingLetters(word: string, freqmap: Array<number>) {
         }
     }
 
+    if (valid) return null;
+
     ret += close;
-
-    if (valid) ret = null;
-
     return ret;
 }
 
