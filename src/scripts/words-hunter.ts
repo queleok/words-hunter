@@ -3,27 +3,24 @@
 import { generate } from './generate-letters.js';
 import { formatTime, formatResult, escapeMissingLetters, escapeRegExp, filterNonAlphabetics } from './format.js';
 import { PromiseQueue, FetchResult } from './queue.js';
+import { LetterWidget } from './ui.js';
 
 let freqmap = Array(26).fill(0);
 let queue = new PromiseQueue();
 
-function createLetterDiv(letter: string) {
-    let cell_div = document.createElement('div');
-    cell_div.setAttribute('class', 'hbox-nowrap cell l-' + letter);
-    cell_div.textContent = letter;
-    return cell_div;
-}
+function generateLetters(letters_div: HTMLElement) {
+    letters_div.textContent = '';
 
-function generateLetters() {
-    const letters_div = document.getElementById('letters');
-    letters_div!.textContent = '';
-    
     const {alpha_count, letters} = generate();
     freqmap = alpha_count;
-    
+
+    let ret = new Array<LetterWidget>();
+
     for (const letter of letters) {
-        letters_div!.append(createLetterDiv(letter));
+        ret.push(new LetterWidget(letter, letters_div));
     }
+
+    return ret;
 }
 
 function getFetchResultHandler(word: Element) {
@@ -44,9 +41,6 @@ function getFetchResultHandler(word: Element) {
 }
 
 function resend(e: Event) {
-    const button = document.getElementById('resend');
-    button!.removeEventListener('click', resend);
-
     const failed_words = document.querySelectorAll('.network-failure');
     if (failed_words.length > 0) {
         const results = document.getElementById('result');
@@ -67,7 +61,7 @@ function resend(e: Event) {
     e.stopPropagation();
 }
 
-function reportResults(results: Element) {
+function reportResults(results: HTMLElement) {
     let res = 0;
     const successElements = document.getElementsByClassName('success');
     for (const element of successElements) {
@@ -81,41 +75,42 @@ function reportResults(results: Element) {
     if (failed_words.length > 0) {
         const disclaimer = document.getElementById('network-issues-disclaimer');
         disclaimer!.classList.remove('hidden');
-        const resend_button = document.getElementById('resend');
-        resend_button!.addEventListener('click', resend);
+        const resend_button = document.getElementById('resend') as HTMLElement;
+        resend_button.addEventListener('click', resend, { once: true } );
     }
 }
 
-function stopTimer(tmr: number) {
+function stopTimer(tmr: number, letters: Array<LetterWidget>, word_input: HTMLInputElement, results: HTMLElement) {
     // stop timer
     clearInterval(tmr);
 
     // hide input & disable event listening for it
-    const word_input = document.getElementById('word') as HTMLInputElement;
     word_input.value = '';
     word_input.classList.add('hidden');
     word_input.removeEventListener('keypress', handleWord);
     word_input.removeEventListener('beforeinput', handleBeforeInput);
     word_input.removeEventListener('input', handleInput);
 
-    dehighlightLetters();
+    for (const letter of letters) {
+        letter.dehighlight();
+        letter.release();
+    }
 
     // show results
-    const results = document.getElementById('result');
-    results!.classList.remove('hidden');
-    results!.classList.add('pending-result');
+    results.classList.remove('hidden');
+    results.classList.add('pending-result');
 
-    queue.deplete(() => { reportResults(results!); });
+    queue.deplete(() => { reportResults(results); });
 }
 
-function startTimer(minutes: number) {
+function startTimer(minutes: number, letters: Array<LetterWidget>, word_input: HTMLInputElement, results: HTMLElement) {
     const left = document.getElementById('timeleft');
     let sec = Math.floor(minutes * 60);
     left!.textContent = formatTime(sec);
 
     let tmr = setInterval(() => {
         if (sec === 0) {
-            stopTimer(tmr);
+            stopTimer(tmr, letters, word_input, results);
             return;
         }
         --sec;
@@ -125,8 +120,8 @@ function startTimer(minutes: number) {
     return tmr;
 }
 
-function publishWord(word: string | null) {
-    if (word === null || word.length < 2)
+function publishWord(word: string) {
+    if (word.length < 2)
         return;
 
     const id = 'w_' + word;
@@ -174,22 +169,21 @@ function dehighlightLetters() {
     }
 }
 
-function redoLettersHighlighting() {
+function redoLettersHighlighting(word_input: HTMLInputElement) {
     dehighlightLetters();
-    const word_input = document.getElementById('word') as HTMLInputElement;
-    const alphas = filterNonAlphabetics(word_input!.value);
+    const alphas = filterNonAlphabetics(word_input.value);
     for (const alpha of alphas) {
         highlightLetter(alpha);
     }
 }
 
-function handleWord(e: Event) {
-    switch((e as KeyboardEvent).key) {
+function handleWord(e: KeyboardEvent) {
+    switch(e.key) {
         case "Enter":
-            const word_input = document.getElementById('word') as HTMLInputElement;
+            const word_input = e.currentTarget as HTMLInputElement;
             const word_unescaped = new String(word_input.value);
-            if (word_input!.checkValidity() && word_unescaped.length > 2) {
-                word_input!.value = '';
+            if (word_input.checkValidity() && word_unescaped.length > 2) {
+                word_input.value = '';
                 dehighlightLetters();
                 const word = escapeRegExp(word_unescaped.toLowerCase());
                 publishWord(word);
@@ -199,12 +193,12 @@ function handleWord(e: Event) {
     e.stopPropagation();
 }
 
-function handleBeforeInput(e: Event) {
-    const word_input = document.getElementById('word') as HTMLInputElement;
-    const begin = word_input!.selectionStart!;
-    const end = word_input!.selectionEnd!;
-    if ((e as InputEvent).inputType === "insertText" && (e as InputEvent).data !== null && begin !== end) {
-        const alphas = filterNonAlphabetics(word_input!.value.substring(begin, end));
+function handleBeforeInput(e: InputEvent) {
+    const word_input = e.currentTarget as HTMLInputElement;
+    const begin = word_input.selectionStart!;
+    const end = word_input.selectionEnd!;
+    if (e.inputType === "insertText" && e.data !== null && begin !== end) {
+        const alphas = filterNonAlphabetics(word_input.value.substring(begin, end));
         for (const alpha of alphas) dehighlightLetter(alpha);
     }
 }
@@ -214,41 +208,41 @@ function handleInput(e: Event) {
         const alphas = filterNonAlphabetics((e as InputEvent).data!);
         for (const alpha of alphas) highlightLetter(alpha);
     } else {
-        redoLettersHighlighting();
+        redoLettersHighlighting(e.currentTarget as HTMLInputElement);
     }
 }
 
 function reset() {
-    queue.deplete(() => { console.log("old queue depleted"); });
     queue = new PromiseQueue();
 
-    const resend_button = document.getElementById('resend');
-    resend_button!.removeEventListener('click', resend);
-    const disclaimer = document.getElementById('network-issues-disclaimer');
-    disclaimer!.classList.add('hidden');
+    const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
+    disclaimer.classList.add('hidden');
 
-    generateLetters();
+    const letters_div = document.getElementById('letters') as HTMLElement;
+    const letters = generateLetters(letters_div);
 
-    const word_input = document.getElementById('word');
-    word_input!.classList.remove('hidden');
-    word_input!.addEventListener('keypress', handleWord);
-    word_input!.addEventListener('beforeinput', handleBeforeInput);
-    word_input!.addEventListener('input', handleInput);
-    word_input!.focus();
+    const word_input = document.getElementById('word') as HTMLInputElement;
+    word_input.classList.remove('hidden');
+    word_input.addEventListener('keypress', handleWord);
+    word_input.addEventListener('beforeinput', handleBeforeInput);
+    word_input.addEventListener('input', handleInput);
+    word_input.focus();
 
-    const results = document.getElementById('result');
-    results!.textContent = 'Result:  ';
-    results!.classList.add('hidden');
-    results!.classList.remove('pending-result');
+    const results = document.getElementById('result') as HTMLElement;
+    results.classList.add('hidden');
+    results.classList.remove('pending-result');
 
-    const scores = document.getElementById('scores');
-    scores!.textContent = '';
+    const scores = document.getElementById('scores') as HTMLElement;
+    scores.textContent = '';
 
-    const tmr = startTimer(2);
+    const tmr = startTimer(2, letters, word_input, results);
 
-    const again = document.getElementById('again');
-    const once = { once : true };
-    again!.addEventListener('click', (event) => { stopTimer(tmr); reset() }, once );
+    const again = document.getElementById('again') as HTMLElement;
+    again.addEventListener('click', (event) => {
+        queue.deplete(() => { console.log("old queue depleted"); });
+        stopTimer(tmr, letters, word_input, results);
+        reset();
+    }, { once: true } );
 }
 
 window.addEventListener('load', function () {
