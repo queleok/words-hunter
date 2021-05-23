@@ -3,12 +3,12 @@
 import { generate } from './generate-letters.js';
 import { formatTime, formatResult, escapeMissingLetters, escapeRegExp, filterNonAlphabetics } from './format.js';
 import { PromiseQueue, FetchResult } from './queue.js';
-import { LetterWidget } from './ui.js';
+import { LetterWidget, WordSynchronizer } from './ui.js';
 
 let freqmap = Array(26).fill(0);
 let queue = new PromiseQueue();
 
-function generateLetters(letters_div: HTMLElement) {
+function generateLetters(letters_div: HTMLElement, word_input: HTMLInputElement, synchronizer: WordSynchronizer) {
     letters_div.textContent = '';
 
     const {alpha_count, letters} = generate();
@@ -17,7 +17,7 @@ function generateLetters(letters_div: HTMLElement) {
     let ret = new Array<LetterWidget>();
 
     for (const letter of letters) {
-        ret.push(new LetterWidget(letter, letters_div));
+        ret.push(new LetterWidget(letter, letters_div, word_input, synchronizer));
     }
 
     return ret;
@@ -80,7 +80,12 @@ function reportResults(results: HTMLElement) {
     }
 }
 
-function stopTimer(tmr: number, letters: Array<LetterWidget>, word_input: HTMLInputElement, results: HTMLElement) {
+function stopTimer(tmr: number, letters: Array<LetterWidget>
+        , word_input: HTMLInputElement, results: HTMLElement
+        , handleWord: (e: KeyboardEvent) => void
+        , handleBeforeInput: (e: InputEvent) => void
+        , handleInput: (e: Event) => void)
+{
     // stop timer
     clearInterval(tmr);
 
@@ -103,14 +108,19 @@ function stopTimer(tmr: number, letters: Array<LetterWidget>, word_input: HTMLIn
     queue.deplete(() => { reportResults(results); });
 }
 
-function startTimer(minutes: number, letters: Array<LetterWidget>, word_input: HTMLInputElement, results: HTMLElement) {
+function startTimer(minutes: number, letters: Array<LetterWidget>
+        , word_input: HTMLInputElement, results: HTMLElement
+        , wordHandler: (e: KeyboardEvent) => void
+        , beforeInputHandler: (e: InputEvent) => void
+        , inputHandler: (e: Event) => void)
+{
     const left = document.getElementById('timeleft');
     let sec = Math.floor(minutes * 60);
     left!.textContent = formatTime(sec);
 
     let tmr = setInterval(() => {
         if (sec === 0) {
-            stopTimer(tmr, letters, word_input, results);
+            stopTimer(tmr, letters, word_input, results, wordHandler, beforeInputHandler, inputHandler);
             return;
         }
         --sec;
@@ -153,63 +163,69 @@ function publishWord(word: string) {
     }
 }
 
-function highlightLetter(letter: string) {
-    const cell_div = document.querySelector('.l-' + letter.toLowerCase() + ':not(.highlighted)');
-    if (cell_div !== null) cell_div.classList.add('highlighted');
-}
-
-function dehighlightLetter(letter: string) {
-    const cell_div = document.querySelector('.l-' + letter.toLowerCase() + '.highlighted');
-    if (cell_div !== null) cell_div.classList.remove('highlighted');
-}
-
-function dehighlightLetters() {
-    for (let cell_div of document.querySelectorAll('.highlighted')) {
-        cell_div.classList.remove('highlighted');
+function highlightLetter(letter: string, letters: Array<LetterWidget>) {
+    for (const letter_widget of letters) {
+        if (letter == letter_widget.getLetter() && letter_widget.highlight()) return;
     }
 }
 
-function redoLettersHighlighting(word_input: HTMLInputElement) {
-    dehighlightLetters();
+function dehighlightLetter(letter: string, letters: Array<LetterWidget>) {
+    for (const letter_widget of letters) {
+        if (letter == letter_widget.getLetter() && letter_widget.dehighlight()) return;
+    }
+}
+
+function dehighlightLetters(letters: Array<LetterWidget>) {
+    for (const letter of letters) {
+        letter.dehighlight();
+    }
+}
+
+function redoLettersHighlighting(word_input: HTMLInputElement, letters: Array<LetterWidget>) {
+    dehighlightLetters(letters);
     const alphas = filterNonAlphabetics(word_input.value);
     for (const alpha of alphas) {
-        highlightLetter(alpha);
+        highlightLetter(alpha, letters);
     }
 }
 
-function handleWord(e: KeyboardEvent) {
-    switch(e.key) {
-        case "Enter":
-            const word_input = e.currentTarget as HTMLInputElement;
-            const word_unescaped = new String(word_input.value);
-            if (word_input.checkValidity() && word_unescaped.length > 2) {
-                word_input.value = '';
-                dehighlightLetters();
-                const word = escapeRegExp(word_unescaped.toLowerCase());
-                publishWord(word);
-            }
-            break;
-    }
-    e.stopPropagation();
+function getWordHandler(letters: Array<LetterWidget>) {
+    return (e: KeyboardEvent) => {
+        switch(e.key) {
+            case "Enter":
+                const word_input = e.currentTarget as HTMLInputElement;
+                const word_unescaped = new String(word_input.value);
+                if (word_input.checkValidity() && word_unescaped.length > 2) {
+                    word_input.value = '';
+                    dehighlightLetters(letters);
+                    const word = escapeRegExp(word_unescaped.toLowerCase());
+                    publishWord(word);
+                }
+                break;
+        }
+        e.stopPropagation();
+    };
 }
 
-function handleBeforeInput(e: InputEvent) {
-    const word_input = e.currentTarget as HTMLInputElement;
-    const begin = word_input.selectionStart!;
-    const end = word_input.selectionEnd!;
-    if (e.inputType === "insertText" && e.data !== null && begin !== end) {
-        const alphas = filterNonAlphabetics(word_input.value.substring(begin, end));
-        for (const alpha of alphas) dehighlightLetter(alpha);
-    }
+function getInputHandler(letters: Array<LetterWidget>) {
+    return (e: Event) => {
+        if ((e as InputEvent).inputType === 'insertText' && (e as InputEvent).data !== null) {
+        } else {
+            redoLettersHighlighting(e.currentTarget as HTMLInputElement, letters);
+        }
+    };
 }
 
-function handleInput(e: Event) {
-    if ((e as InputEvent).inputType === 'insertText' && (e as InputEvent).data !== null) {
-        const alphas = filterNonAlphabetics((e as InputEvent).data!);
-        for (const alpha of alphas) highlightLetter(alpha);
-    } else {
-        redoLettersHighlighting(e.currentTarget as HTMLInputElement);
-    }
+function getBeforeInputHandler(letters: Array<LetterWidget>) {
+    return (e: InputEvent) => {
+        const word_input = e.currentTarget as HTMLInputElement;
+        const begin = word_input.selectionStart!;
+        const end = word_input.selectionEnd!;
+        if (e.inputType === "insertText" && e.data !== null && begin !== end) {
+            const alphas = filterNonAlphabetics(word_input.value.substring(begin, end));
+            for (const alpha of alphas) dehighlightLetter(alpha, letters);
+        }
+    };
 }
 
 function reset() {
@@ -218,14 +234,21 @@ function reset() {
     const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
     disclaimer.classList.add('hidden');
 
-    const letters_div = document.getElementById('letters') as HTMLElement;
-    const letters = generateLetters(letters_div);
-
     const word_input = document.getElementById('word') as HTMLInputElement;
+
+    const synchronizer = new WordSynchronizer(word_input);
+
+    const letters_div = document.getElementById('letters') as HTMLElement;
+    const letters = generateLetters(letters_div, word_input, synchronizer);
+
+    const wordHandler = getWordHandler(letters);
+    const inputHandler = getInputHandler(letters);
+    const beforeInputHandler = getBeforeInputHandler(letters);
+
     word_input.classList.remove('hidden');
-    word_input.addEventListener('keypress', handleWord);
-    word_input.addEventListener('beforeinput', handleBeforeInput);
-    word_input.addEventListener('input', handleInput);
+    word_input.addEventListener('keypress', wordHandler);
+    word_input.addEventListener('beforeinput', beforeInputHandler);
+    word_input.addEventListener('input', inputHandler);
     word_input.focus();
 
     const results = document.getElementById('result') as HTMLElement;
@@ -235,12 +258,12 @@ function reset() {
     const scores = document.getElementById('scores') as HTMLElement;
     scores.textContent = '';
 
-    const tmr = startTimer(2, letters, word_input, results);
+    const tmr = startTimer(2, letters, word_input, results, wordHandler, beforeInputHandler, inputHandler);
 
     const again = document.getElementById('again') as HTMLElement;
     again.addEventListener('click', (event) => {
         queue.deplete(() => { console.log("old queue depleted"); });
-        stopTimer(tmr, letters, word_input, results);
+        stopTimer(tmr, letters, word_input, results, wordHandler, beforeInputHandler, inputHandler);
         reset();
     }, { once: true } );
 }
