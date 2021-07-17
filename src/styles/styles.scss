@@ -1,6 +1,7 @@
 * {
     margin: 0;
     padding: 0;
+    font-family: 'Source Code Pro';
 }
 
 .hidden {
@@ -24,18 +25,6 @@
     display: flex;
     flex-wrap: wrap;
     align-content: space-around;
-    align-content: space-around;
-}
-
-.cell {
-    position: relative;
-    width: 25%;
-    height: 0;
-    padding-top: 12.5%;
-    padding-bottom: 12.5%;
-    align-content: center;
-    align-items: center;
-    background-color: beige;
 }
 
 .highlighted {
@@ -43,53 +32,97 @@
 }
 
 .canvas {
-    min-width: 360px;
-    max-width: 800px;
-    padding-top: 2%;
+    width: 100vw;
+    height: 100vh;
+}
+
+#controls {
+    height: 2em;
+    align-items: center;
+    overflow: hidden;
 }
 
 #timer {
-    font-family: 'Source Code Pro', monospace;
-    font-size: 35pt;
+    font-size: 2em;
     color: gainsboro;
 }
 
+.post-controls {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: flex-start;
+    align-content: flex-start;
+    justify-content: center;
+    width: 100%;
+    height: calc(100% - 2em);
+}
+
 #playground {
-    width: 50%;
+    min-width: 12em;
+    max-width: 350px;
+    overflow: hidden;
+    flex: 1 1 50%;
+}
+
+@media screen and (orientation: portrait) and (max-width: 700px) {
+    #playground {
+        max-width: 70vw;
+    }
+}
+
+.cell {
+    width: 0;
+    height: 0;
+    padding: 12.5%;
+    align-content: center;
+    align-items: center;
+    background-color: beige;
+    font-size: 2em;
 }
 
 #scores {
-    width: 50%;
-    min-width: 160pt;
+    flex: 1 1 50%;
+    min-width: 14em;
+    max-width: 350px;
     flex-direction: column-reverse;
     justify-content: flex-end;
+    overflow: scroll;
+}
+
+#scores > * {
+    flex: 0 0 auto;
 }
 
 #letters {
     width: 100%;
-    font-family: 'Source Code Pro', monospace;
-    font-size: 30pt;
+    flex: 1 1 auto;
+    min-height: 2em * 4;
 }
 
 .result {
     margin-top: 5px;
     margin-bottom: 5px;
-    font-family: 'Source Code Pro', monospace;
-    font-size: 25pt;
+    font-size: 1.5em;
 }
 
 #again {
     height: 0%;
     width: 0%;
-    padding: 15%;
-    margin: 5%;
+    padding: 1em;
     background-image: url(icons/refresh-arrow.svg);
+}
+
+#shuffle {
+    height: 0%;
+    width: 0%;
+    padding: 1em;
+    background-image: url(icons/shuffle.svg);
 }
 
 #resend {
     height: 0%;
     width: 0%;
-    padding: 5%;
+    padding: 1em;
     background-image: url(icons/refresh-arrow.svg);
 }
 
@@ -105,17 +138,17 @@
 }
 
 .score {
-    font-family: 'Source Code Pro', monospace;
-    font-size: 16pt;
+    font-size: 1.2em;
     display: flex;
+    align-items: center;
 }
 
 .score::before {
     content: "";    
     background-repeat: no-repeat;
     background-size: contain;
-    width: 16pt;
-    height: 16pt;
+    width: 1em;
+    height: 1em;
 }
 
 .success {
@@ -146,8 +179,8 @@
 }
 
 .pending-result::before {
-    height: 40px;
-    width: 40px;
+    height: 1.5em;
+    width: 1.5em;
     content: "";    
     background-repeat: no-repeat;
     background-size: contain;
@@ -208,22 +241,26 @@
 }
 
 input[type="text"] {
-    font-size: 16pt;
-    font-family: 'Source Code Pro', monospace;
-    width: 98%;
-    min-width: 160pt;
-    max-width: 250pt;
+    font-size: 1.2em;
+    min-width: 1.2em;
+    flex: 1 1 0%;
+    display: block;
 }
 
-#word:invalid + label::after{
-    content: "Enter a word consisting of 3-16 letters";
-    font-family: 'Source Code Pro', monospace;
-    color: red;
+#word {
+    width: 100%;
+    flex: 1 1 auto;
+}
+
+#publish {
+    height: 2em;
+    width: 2em;
+    background-image: url(icons/up-chevron-button.svg);
+    flex: 0 0 auto;
 }
 
 .main-block {
-    font-family: 'Source Code Pro', monospace;
-    font-size: 16pt;
+    font-size: 1em;
     background-color: beige;
     width: 100%;
     margin: 2pt;
@@ -305,7 +342,6 @@ ul {
 
 .disclaimer {
     max-width: 298px;
-    font-family: 'Source Code Pro';
     margin: auto;
     color: black;
     filter: invert(87%) sepia(0%) saturate(2%) hue-rotate(49deg) brightness(103%) contrast(92%);
