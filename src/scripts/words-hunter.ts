@@ -1,29 +1,26 @@
 'use strict';
 
-import { generate } from './generate-letters.js';
-import { formatTime, formatResult, escapeMissingLetters, escapeRegExp, filterNonAlphabetics } from './format.js';
+import { generate, shuffle } from './generate-letters.js';
+import { formatTime, formatResult, escapeMissingLetters } from './format.js';
 import { PromiseQueue, FetchResult } from './queue.js';
+import { LetterWidget, WordSynchronizer } from './ui.js';
 
 let freqmap = Array(26).fill(0);
 let queue = new PromiseQueue();
 
-function createLetterDiv(letter: string) {
-    let cell_div = document.createElement('div');
-    cell_div.setAttribute('class', 'hbox-nowrap cell l-' + letter);
-    cell_div.textContent = letter;
-    return cell_div;
-}
+function generateLetters(letters_div: HTMLElement, synchronizer: WordSynchronizer) {
+    letters_div.textContent = '';
 
-function generateLetters() {
-    const letters_div = document.getElementById('letters');
-    letters_div!.textContent = '';
-    
     const {alpha_count, letters} = generate();
     freqmap = alpha_count;
-    
+
+    let ret = new Array<LetterWidget>();
+
     for (const letter of letters) {
-        letters_div!.append(createLetterDiv(letter));
+        ret.push(new LetterWidget(letter, letters_div, synchronizer));
     }
+
+    return ret;
 }
 
 function getFetchResultHandler(word: Element) {
@@ -44,9 +41,6 @@ function getFetchResultHandler(word: Element) {
 }
 
 function resend(e: Event) {
-    const button = document.getElementById('resend');
-    button!.removeEventListener('click', resend);
-
     const failed_words = document.querySelectorAll('.network-failure');
     if (failed_words.length > 0) {
         const results = document.getElementById('result');
@@ -67,7 +61,7 @@ function resend(e: Event) {
     e.stopPropagation();
 }
 
-function reportResults(results: Element) {
+function reportResults(results: HTMLElement) {
     let res = 0;
     const successElements = document.getElementsByClassName('success');
     for (const element of successElements) {
@@ -81,41 +75,38 @@ function reportResults(results: Element) {
     if (failed_words.length > 0) {
         const disclaimer = document.getElementById('network-issues-disclaimer');
         disclaimer!.classList.remove('hidden');
-        const resend_button = document.getElementById('resend');
-        resend_button!.addEventListener('click', resend);
+        const resend_button = document.getElementById('resend') as HTMLElement;
+        resend_button.addEventListener('click', resend, { once: true } );
     }
 }
 
-function stopTimer(tmr: number) {
+function stopTimer(tmr: number
+        , results: HTMLElement
+        , synchronizer: WordSynchronizer) 
+{
     // stop timer
     clearInterval(tmr);
 
-    // hide input & disable event listening for it
-    const word_input = document.getElementById('word') as HTMLInputElement;
-    word_input.value = '';
-    word_input.classList.add('hidden');
-    word_input.removeEventListener('keypress', handleWord);
-    word_input.removeEventListener('beforeinput', handleBeforeInput);
-    word_input.removeEventListener('input', handleInput);
-
-    dehighlightLetters();
+    synchronizer.release();
 
     // show results
-    const results = document.getElementById('result');
-    results!.classList.remove('hidden');
-    results!.classList.add('pending-result');
+    results.classList.remove('hidden');
+    results.classList.add('pending-result');
 
-    queue.deplete(() => { reportResults(results!); });
+    queue.deplete(() => { reportResults(results); });
 }
 
-function startTimer(minutes: number) {
+function startTimer(minutes: number
+        , results: HTMLElement
+        , synchronizer: WordSynchronizer)
+{
     const left = document.getElementById('timeleft');
     let sec = Math.floor(minutes * 60);
     left!.textContent = formatTime(sec);
 
     let tmr = setInterval(() => {
         if (sec === 0) {
-            stopTimer(tmr);
+            stopTimer(tmr, results, synchronizer);
             return;
         }
         --sec;
@@ -125,8 +116,8 @@ function startTimer(minutes: number) {
     return tmr;
 }
 
-function publishWord(word: string | null) {
-    if (word === null || word.length < 2)
+function publishWord(word: string) {
+    if (word.length < 2)
         return;
 
     const id = 'w_' + word;
@@ -158,97 +149,56 @@ function publishWord(word: string | null) {
     }
 }
 
-function highlightLetter(letter: string) {
-    const cell_div = document.querySelector('.l-' + letter.toLowerCase() + ':not(.highlighted)');
-    if (cell_div !== null) cell_div.classList.add('highlighted');
-}
-
-function dehighlightLetter(letter: string) {
-    const cell_div = document.querySelector('.l-' + letter.toLowerCase() + '.highlighted');
-    if (cell_div !== null) cell_div.classList.remove('highlighted');
-}
-
-function dehighlightLetters() {
-    for (let cell_div of document.querySelectorAll('.highlighted')) {
-        cell_div.classList.remove('highlighted');
-    }
-}
-
-function redoLettersHighlighting() {
-    dehighlightLetters();
-    const word_input = document.getElementById('word') as HTMLInputElement;
-    const alphas = filterNonAlphabetics(word_input!.value);
-    for (const alpha of alphas) {
-        highlightLetter(alpha);
-    }
-}
-
-function handleWord(e: Event) {
-    switch((e as KeyboardEvent).key) {
-        case "Enter":
-            const word_input = document.getElementById('word') as HTMLInputElement;
-            const word_unescaped = new String(word_input.value);
-            if (word_input!.checkValidity() && word_unescaped.length > 2) {
-                word_input!.value = '';
-                dehighlightLetters();
-                const word = escapeRegExp(word_unescaped.toLowerCase());
-                publishWord(word);
-            }
-            break;
-    }
-    e.stopPropagation();
-}
-
-function handleBeforeInput(e: Event) {
-    const word_input = document.getElementById('word') as HTMLInputElement;
-    const begin = word_input!.selectionStart!;
-    const end = word_input!.selectionEnd!;
-    if ((e as InputEvent).inputType === "insertText" && (e as InputEvent).data !== null && begin !== end) {
-        const alphas = filterNonAlphabetics(word_input!.value.substring(begin, end));
-        for (const alpha of alphas) dehighlightLetter(alpha);
-    }
-}
-
-function handleInput(e: Event) {
-    if ((e as InputEvent).inputType === 'insertText' && (e as InputEvent).data !== null) {
-        const alphas = filterNonAlphabetics((e as InputEvent).data!);
-        for (const alpha of alphas) highlightLetter(alpha);
-    } else {
-        redoLettersHighlighting();
-    }
-}
-
 function reset() {
-    queue.deplete(() => { console.log("old queue depleted"); });
     queue = new PromiseQueue();
 
-    const resend_button = document.getElementById('resend');
-    resend_button!.removeEventListener('click', resend);
-    const disclaimer = document.getElementById('network-issues-disclaimer');
-    disclaimer!.classList.add('hidden');
+    const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
+    disclaimer.classList.add('hidden');
 
-    generateLetters();
+    const word = document.getElementById('word')!;
 
-    const word_input = document.getElementById('word');
-    word_input!.classList.remove('hidden');
-    word_input!.addEventListener('keypress', handleWord);
-    word_input!.addEventListener('beforeinput', handleBeforeInput);
-    word_input!.addEventListener('input', handleInput);
-    word_input!.focus();
+    const synchronizer = new WordSynchronizer(word, publishWord);
 
-    const results = document.getElementById('result');
-    results!.textContent = 'Result:  ';
-    results!.classList.add('hidden');
-    results!.classList.remove('pending-result');
+    const letters_div = document.getElementById('letters') as HTMLElement;
+    const letters = generateLetters(letters_div, synchronizer);
+    synchronizer.setLetters(letters);
 
-    const scores = document.getElementById('scores');
-    scores!.textContent = '';
+    const shuffler = (e: Event) => {
+        const idxs = [...Array(letters_div.children.length).keys()]
+        shuffle(idxs);
 
-    const tmr = startTimer(2);
+        // NOTE: childNodes is a live list, hence we can't use it directly
+        const children = letters_div.childNodes;
 
-    const again = document.getElementById('again');
-    const once = { once : true };
-    again!.addEventListener('click', (event) => { stopTimer(tmr); reset() }, once );
+        let sorted_children = new Array<Node>();
+        for (const idx of idxs) {
+            sorted_children.push(children[idx]);
+        }
+
+        for (const child of sorted_children) {
+            letters_div.appendChild(child);
+        }
+        e.stopPropagation();
+    }
+    const shuffle_btn = document.getElementById('shuffle') as HTMLElement;
+    shuffle_btn.addEventListener('click', shuffler);
+
+    const results = document.getElementById('result') as HTMLElement;
+    results.classList.add('hidden');
+    results.classList.remove('pending-result');
+
+    const scores = document.getElementById('scores') as HTMLElement;
+    scores.textContent = '';
+
+    const tmr = startTimer(2, results, synchronizer);
+
+    const again = document.getElementById('again') as HTMLElement;
+    again.addEventListener('click', (event) => {
+        queue.deplete(() => { console.log("old queue depleted"); });
+        stopTimer(tmr, results, synchronizer);
+        shuffle_btn.removeEventListener('click', shuffler);
+        reset();
+    }, { once: true } );
 }
 
 window.addEventListener('load', function () {
