@@ -1,6 +1,6 @@
 'use strict';
 
-import { generate } from './generate-letters.js';
+import { generate, shuffle } from './generate-letters.js';
 import { formatTime, formatResult, escapeMissingLetters } from './format.js';
 import { PromiseQueue, FetchResult } from './queue.js';
 import { LetterWidget, WordSynchronizer } from './ui.js';
@@ -163,6 +163,26 @@ function reset() {
     const letters = generateLetters(letters_div, synchronizer);
     synchronizer.setLetters(letters);
 
+    const shuffler = (e: Event) => {
+        const idxs = [...Array(letters_div.children.length).keys()]
+        shuffle(idxs);
+
+        // NOTE: childNodes is a live list, hence we can't use it directly
+        const children = letters_div.childNodes;
+
+        let sorted_children = new Array<Node>();
+        for (const idx of idxs) {
+            sorted_children.push(children[idx]);
+        }
+
+        for (const child of sorted_children) {
+            letters_div.appendChild(child);
+        }
+        e.stopPropagation();
+    }
+    const shuffle_btn = document.getElementById('shuffle') as HTMLElement;
+    shuffle_btn.addEventListener('click', shuffler);
+
     const results = document.getElementById('result') as HTMLElement;
     results.classList.add('hidden');
     results.classList.remove('pending-result');
@@ -176,6 +196,7 @@ function reset() {
     again.addEventListener('click', (event) => {
         queue.deplete(() => { console.log("old queue depleted"); });
         stopTimer(tmr, results, synchronizer);
+        shuffle_btn.removeEventListener('click', shuffler);
         reset();
     }, { once: true } );
 }
