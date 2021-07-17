@@ -1,33 +1,30 @@
-import { getLetterOrdinalNumber } from './generate-letters.js'
-
-function formatTimeSlot(amount: number) {
+import { getLetterOrdinalNumber } from './generate-letters.js';
+function formatTimeSlot(amount) {
     amount = Math.floor(amount);
-    if      (amount < 0) return '00';
-    else if (amount < 10) return '0' + amount;
+    if (amount < 0)
+        return '00';
+    else if (amount < 10)
+        return '0' + amount;
     return '' + amount;
 }
-
-function formatTime(sec: number) {
+function formatTime(sec) {
     let mins = Math.floor(sec / 60);
     let secs = sec - mins * 60;
     return formatTimeSlot(mins) + ':' + formatTimeSlot(secs);
 }
-
-function formatResult(res: number) {
-    if (res < 10) return '  ' + res;
-    else if (res < 100) return ' ' + res;
+function formatResult(res) {
+    if (res < 10)
+        return '  ' + res;
+    else if (res < 100)
+        return ' ' + res;
     return res;
 }
-
-function escapeMissingLetters(word: string, freqmap: Array<number>) {
+function escapeMissingLetters(word, freqmap) {
     const freq = [...freqmap];
-    
     let valid = true;
-
     let ret = '';
     let open = '<s>';
     let close = '';
-
     for (let i = 0; i < word.length; i++) {
         const chr = word.charAt(i);
         if (--freq[getLetterOrdinalNumber(chr)] < 0) {
@@ -35,26 +32,23 @@ function escapeMissingLetters(word: string, freqmap: Array<number>) {
             ret += open + chr;
             open = '';
             close = '</s>';
-        } else {
+        }
+        else {
             ret += close + chr;
             open = '<s>';
             close = '';
         }
     }
-
-    if (valid) return null;
-
+    if (valid)
+        return null;
     ret += close;
     return ret;
 }
-
 // shamelessly copy-pasted from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#Escaping
-function escapeRegExp(str: string) {
+function escapeRegExp(str) {
     return str.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
-
-function filterNonAlphabetics(str: string) {
-    return str.replace(/[^a-zA-Z]+/g, '')
+function filterNonAlphabetics(str) {
+    return str.replace(/[^a-zA-Z]+/g, '');
 }
-
 export { formatTime, formatResult, escapeMissingLetters, escapeRegExp, filterNonAlphabetics };

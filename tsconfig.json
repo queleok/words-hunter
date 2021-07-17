@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "outDir": "./site",
-    "target": "es2018",
-    "strict": true
-  },
-  "include": ["./src/**/*"]
-}
