@@ -57,8 +57,8 @@ class PromiseQueue {
     }
 
     deplete(this: PromiseQueue, cb: () => void) {
-        if (this.length > 0) this.depletion_cb = cb;
-        else cb();
+        this.depletion_cb = cb;
+        if (this.length >= 0) this.depletion_cb();
     }
 
 }
