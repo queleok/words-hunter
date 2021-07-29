@@ -1,0 +1,38 @@
+#again {
+    height: 0%;
+    width: 0%;
+    padding: 22px;
+    background-image: url(icons/refresh-arrow.svg);
+}
+
+#shuffle {
+    height: 0%;
+    width: 0%;
+    padding: 22px;
+    background-image: url(icons/shuffle.svg);
+}
+
+#resend {
+    height: 0%;
+    width: 0%;
+    padding: 22px;
+    background-image: url(icons/refresh-arrow.svg);
+    filter: unset;
+}
+
+#resend:hover,
+#resend:focus {
+    filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+}
+
+.button {
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: invert(99%) sepia(0%) saturate(5888%) hue-rotate(261deg) brightness(88%) contrast(97%);
+}
+
+.button:hover,
+.button:focus {
+    filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+}
+
