@@ -37,7 +37,6 @@ class WordSynchronizer {
         this.input.addEventListener('keypress', this.handleWord);
         this.input.addEventListener('beforeinput', this.handleBeforeInput);
         this.input.addEventListener('input', this.handleInput);
-        this.input.focus();
     }
 
     release = () => {

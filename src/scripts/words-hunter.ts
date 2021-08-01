@@ -122,10 +122,10 @@ function publishWord(word: string) {
 
     const id = 'w_' + word;
     const found_word = document.getElementById(id);
-    const scores = document.getElementById('scores');
+    const scores = document.getElementById('scores') as HTMLElement;
     if (undefined != found_word) {
-        scores!.removeChild(found_word);
-        scores!.append(found_word);
+        scores.removeChild(found_word);
+        scores.insertBefore(found_word, scores.firstChild); // scores.append(found_word);
         found_word.classList.add('moved');
         setTimeout(() => {
             found_word.classList.remove('moved');
@@ -136,7 +136,7 @@ function publishWord(word: string) {
     let published_word = document.createElement('p');
     published_word.classList.add('score');
     published_word.setAttribute('id', id);
-    scores!.append(published_word);
+    scores.insertBefore(published_word, scores.firstChild); // scores.append(published_word);
     
     const escaped = escapeMissingLetters(word, freqmap);
     if (escaped === null) {

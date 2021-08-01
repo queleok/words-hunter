@@ -11,46 +11,43 @@
         <script type="module" src="words-hunter.js"></script>
     </head>
     <body>
-        <div class="vbox-nowrap canvas">
-            <div id="controls" class="hbox-nowrap">
-                <div id="shuffle" class="button"></div>
-                <div id="timer"><p id="timeleft">00:00</p></div>
-                <div id="again" class="button"></div>
-            </div>
-            <div class="post-controls">
-                <div id="playground" class="vbox-nowrap">
-                    <div id="letters" class="hbox-wrap-space">
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                        <div class="cell hbox-nowrap">*</div>
-                    </div>
-                    <div id="word">
-                        <input id="inpt" type="text" autofocus="true" minlength="3" maxlength="16" autocomplete="off" formmethod="get" pattern="[a-zA-Z]{3,16}">
-                        <!-- <label for="inpt" class="label">Enter a word consisting of 3-16 letters</label> -->
-                        <div id="publish" class="button"></div>
-                    </div>
-                    <pre id="result" class="result hidden">Result:    </pre>
-                    <div id="network-issues-disclaimer" class="hidden">
-                        <div class="vbox-nowrap">
-                            <p class="disclaimer">Validation of some words failed due to the network limitations. Press the button below to initiate validation manually</p>
-                            <div id="resend" class="button"></div>
-                        </div>
-                    </div>
+        <div id="controls" class="hbox-nowrap">
+            <div id="shuffle" class="button"></div>
+            <div id="timer"><p id="timeleft">00:00</p></div>
+            <div id="again" class="button"></div>
+        </div>
+        <div class="post-controls">
+            <div id="playground" class="vbox-nowrap">
+                <div id="letters" class="hbox-wrap-space">
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
+                    <div class="cell hbox-nowrap">*</div>
                 </div>
-                <div id="scores" class="vbox-nowrap"></div>
+                <div id="word">
+                    <input id="inpt" type="text" autofocus="true" minlength="3" maxlength="16" autocomplete="off" formmethod="get" pattern="[a-zA-Z]{3,16}">
+                    <div id="publish" class="button"></div>
+                </div>
+                <pre id="result" class="result hidden">Result:    </pre>
+            </div>
+            <div id="scores" class="vbox-nowrap"></div>
+        </div>
+        <div id="network-issues-disclaimer" class="hbox-wrap hidden blurry-bg">
+            <div class="vbox-nowrap">
+                <p class="disclaimer">Validation of some words failed due to the network limitations. Press the button below to initiate validation manually</p>
+                <div id="resend" class="button"></div>
             </div>
         </div>
     </body>
