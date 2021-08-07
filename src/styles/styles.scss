@@ -62,8 +62,7 @@ body {
     height: 100%;
     flex-direction: column;
     justify-content: unset;
-    // justify-content: flex-end;
-    overflow: scroll;
+    overflow: auto;
 }
 
 #scores > * {
