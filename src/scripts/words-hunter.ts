@@ -28,6 +28,8 @@ function getFetchResultHandler(word: Element) {
         switch (fetch_result) {
             case "success":
                 word.setAttribute('class', 'score success');
+                word.setAttribute('href', `https://api.dictionaryapi.dev/api/v2/entries/en/${word.textContent}`);
+                word.setAttribute('target', '_blank');
                 break;
             case "validation-failure":
             case "no-definition":
@@ -125,7 +127,7 @@ function publishWord(word: string) {
     const scores = document.getElementById('scores') as HTMLElement;
     if (undefined != found_word) {
         scores.removeChild(found_word);
-        scores.insertBefore(found_word, scores.firstChild); // scores.append(found_word);
+        scores.insertBefore(found_word, scores.firstChild);
         found_word.classList.add('moved');
         setTimeout(() => {
             found_word.classList.remove('moved');
@@ -133,11 +135,11 @@ function publishWord(word: string) {
         return;
     }
 
-    let published_word = document.createElement('p');
+    let published_word = document.createElement('a');
     published_word.classList.add('score');
     published_word.setAttribute('id', id);
-    scores.insertBefore(published_word, scores.firstChild); // scores.append(published_word);
-    
+    scores.insertBefore(published_word, scores.firstChild);
+
     const escaped = escapeMissingLetters(word, freqmap);
     if (escaped === null) {
         published_word.textContent = word;
