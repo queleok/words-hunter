@@ -37,6 +37,8 @@ class WordSynchronizer {
         this.input.addEventListener('keypress', this.handleWord);
         this.input.addEventListener('beforeinput', this.handleBeforeInput);
         this.input.addEventListener('input', this.handleInput);
+
+        window.addEventListener('keypress', this.handleWord);
     }
 
     release = () => {
@@ -56,6 +58,8 @@ class WordSynchronizer {
         }
 
         if (this.publish) this.publish.removeEventListener('click', this.handlePublish);
+
+        window.removeEventListener('keypress', this.handleWord);
     }
 
     setLetters = (letts: Array<LetterWidget>) => {
