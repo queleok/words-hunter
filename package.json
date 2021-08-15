@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"There are no tests yet\"",
+    "test": "npm run make-site && jest",
     "serve": "npx http-server site",
     "deploy": "npm run make-site; git branch -f gh-pages HEAD; git checkout gh-pages; git add -f site; git commit -m \"deploy\" --no-gpg-sign; git push origin `git subtree split --prefix site gh-pages`:gh-pages --force; git checkout main",
     "make-js": "tsc",
@@ -33,8 +33,15 @@
   },
   "homepage": "https://github.com/queleok/words-hunter#readme",
   "devDependencies": {
-    "http-server": "^0.12.3",
+    "@types/jest": "^26.0.24",
+    "@types/jest-environment-puppeteer": "^4.4.1",
+    "@types/puppeteer": "^5.4.4",
+    "http-server": "^13.0.0",
+    "jest": "^27.0.6",
+    "jest-puppeteer": "^5.0.4",
+    "puppeteer": "^9.1.1",
     "sass": "^1.32.8",
+    "ts-jest": "^27.0.4",
     "typescript": "^4.2.4"
   }
 }
