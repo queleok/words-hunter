@@ -2,7 +2,15 @@
   "compilerOptions": {
     "outDir": "./site",
     "target": "es2018",
+    "inlineSourceMap": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
     "strict": true
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*"],
+  "exclude": [
+      "./node_modules",
+      "./src/scripts/test"
+  ]
 }

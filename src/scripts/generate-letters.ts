@@ -1,7 +1,7 @@
 const a_code = 'a'.charCodeAt(0);
 
 function getLetterOrdinalNumber(letter: string) {
-    return letter.charCodeAt(0) - a_code;
+    return letter.toLowerCase().charCodeAt(0) - a_code;
 }
 
 // Letters frequency according to Cornwell University Math Explorer's Project:
@@ -98,4 +98,4 @@ function shuffle<Type>(array: Array<Type>) {
     }
 }
 
-export { generate, getLetterOrdinalNumber, shuffle };
+export { limits, generate, getLetterOrdinalNumber, shuffle };

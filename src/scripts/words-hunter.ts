@@ -82,7 +82,7 @@ function reportResults(results: HTMLElement) {
     }
 }
 
-function stopTimer(tmr: number
+function stopTimer(tmr: ReturnType<typeof setInterval>
         , results: HTMLElement
         , synchronizer: WordSynchronizer) 
 {
