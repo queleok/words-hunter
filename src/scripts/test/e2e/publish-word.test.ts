@@ -1,4 +1,8 @@
-import { JSHandle, ElementHandle, HTTPRequest } from 'puppeteer';
+/**
+ * @jest-environment puppeteer
+ */
+
+import { ElementHandle, HTTPRequest } from 'puppeteer';
 
 const timeout = 10000;
 
