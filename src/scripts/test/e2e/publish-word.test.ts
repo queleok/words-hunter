@@ -57,6 +57,7 @@ const send_first_n_letters = async (n: number): Promise<string> => {
 
 beforeAll(async () => {
     await page.goto("http://localhost:8080/play.html");
+    await page.exposeFunction("_puppeteerGetSpeedup", () => { return 100; });
 });
 
 beforeEach(async () => {
@@ -114,7 +115,7 @@ test('Confirm failed word has respective class', async () => {
     expect(published_first_word).toBe(first_word);
 }, timeout);
 
-test('Confirm recoverably failed word has respective class', async () => {
+test('Confirm recoverably failed words have respective class, their occurrence yields network issues disclaimer to appear, and its successful resending yields class modification', async () => {
     getRequestMock = (word: string | undefined) => {
         return {
             status: 400,
@@ -129,4 +130,46 @@ test('Confirm recoverably failed word has respective class', async () => {
     const first_word_eh = (await page.waitForSelector('.network-failure'))!;
     const published_first_word = (await getPropertyUnsafe(first_word_eh, 'textContent'))!;
     expect(published_first_word).toBe(first_word);
+
+    const second_word = (await send_first_n_letters(4))!;
+
+    const moved_first_word_eh = (await page.waitForSelector('.network-failure ~ .network-failure'))!;
+    const moved_published_first_word = (await getPropertyUnsafe(moved_first_word_eh, 'textContent'))!;
+    expect(moved_published_first_word).toBe(first_word);
+
+    const second_word_eh = (await page.$('.network-failure'))!;
+    const published_second_word = (await getPropertyUnsafe(second_word_eh, 'textContent'))!;
+    expect(published_second_word).toBe(second_word);
+
+    const disclaimer_eh = await page.waitForSelector('#network-issues-disclaimer', { visible: true, timeout: 10000 });
+    expect(disclaimer_eh).toBeDefined();
+
+    getRequestMock = (word: string | undefined) => {
+        return {
+            status: 200,
+            headers: { "Access-Control-Allow-Origin": "*" },
+            contentType: 'application/json',
+            body: `[{ "word": "${word}", "meanings": [ { "partOfSpeech": "stub", "definitions": [ { "definition": "stub" } ]}]}]`
+        };
+    };
+
+    const resend_btn_eh = await page.waitForSelector('#resend', { visible: true, timeout: 10000 });
+    expect(resend_btn_eh).toBeDefined();
+    await resend_btn_eh!.click();
+
+    const validated_word_eh = await page.waitForSelector('.success ~ .success');
+    expect(validated_word_eh).toBeDefined();
+    const published_validated_word = (await getPropertyUnsafe(validated_word_eh!, 'textContent'))!;
+    expect(published_validated_word).toBe(first_word);
+
+    const validated_words = await page.$$('.success');
+    expect(validated_words).toBeDefined();
+    expect(validated_words.length).toBe(2);
+
+    const failed_words = await page.$$('.network-failure');
+    expect(failed_words).toBeDefined();
+    expect(failed_words.length).toBe(0);
+
+    const disclaimer_box_model = await disclaimer_eh!.boxModel();
+    expect(disclaimer_box_model).toBeNull();
 }, timeout);

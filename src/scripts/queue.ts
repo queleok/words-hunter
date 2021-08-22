@@ -11,11 +11,13 @@ class PromiseQueue {
     private curr: Node;
     private length: number;
     private depletion_cb?: () => void;
+    private time_scale: number;
 
-    constructor() {
+    constructor(time_scale = 1) {
         this.curr = { item: Promise.resolve("success")  };
         this.begin = { item: Promise.resolve("success"), next: this.curr };
         this.length = 0;
+        this.time_scale = time_scale;
     }
 
     enqueue(this: PromiseQueue, word: string): Promise<FetchResult> {
@@ -38,7 +40,7 @@ class PromiseQueue {
                         else               resolve("network-failure");
                     })
                     .finally(() => { q.dequeue(); });
-                }, 500);
+                }, 500 * q.time_scale);
             });
         });
         this.curr.next = { item: ret };

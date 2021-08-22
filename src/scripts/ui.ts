@@ -221,7 +221,6 @@ class LetterWidget {
         this.sync = synchronizer;
 
         this.letter = letter;
-        console.log(`create letter ${this.letter}`);
 
         this.container = document.createElement('div');
         this.container.setAttribute('class', 'hbox-nowrap cell l-' + letter);
@@ -237,7 +236,6 @@ class LetterWidget {
     release = () => {
         this.container.removeEventListener('click', this.toggleHighlighting);
         this.dehighlight();
-        console.log(`destroy letter ${this.letter}`);
     }
 
     private toggleHighlighting = (e: Event) => {
