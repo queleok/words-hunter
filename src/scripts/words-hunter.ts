@@ -7,6 +7,11 @@ import { LetterWidget, WordSynchronizer } from './ui.js';
 
 let freqmap = Array(26).fill(0);
 let queue = new PromiseQueue();
+let time_scale = 1.0;
+
+declare global {
+    interface Window { _puppeteerGetSpeedup: () => Promise<number>; }
+}
 
 function generateLetters(letters_div: HTMLElement, synchronizer: WordSynchronizer) {
     letters_div.textContent = '';
@@ -113,7 +118,7 @@ function startTimer(minutes: number
         }
         --sec;
         left!.textContent = formatTime(sec);
-    }, 1000);
+    }, 1000 * time_scale);
 
     return tmr;
 }
@@ -151,8 +156,9 @@ function publishWord(word: string) {
     }
 }
 
-function reset() {
-    queue = new PromiseQueue();
+async function reset() {
+    if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
+    queue = new PromiseQueue(time_scale);
 
     const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
     disclaimer.classList.add('hidden');
