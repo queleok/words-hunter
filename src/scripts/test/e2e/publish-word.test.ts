@@ -10,7 +10,7 @@ async function getPropertyUnsafe(eh: ElementHandle, property: string): Promise<s
     return await (await eh.getProperty(property))!.jsonValue();
 }
 
-let getRequestMock = (word: string | undefined) => {
+const getSuccessResponseMock = (word: string | undefined) => {
     return {
         status: 200,
         headers: { "Access-Control-Allow-Origin": "*" },
@@ -19,10 +19,30 @@ let getRequestMock = (word: string | undefined) => {
     };
 };
 
+const getFailureResponseMock = (word: string | undefined) => {
+    return {
+        status: 404,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        contentType: 'application/json',
+        body: `[ "Word '${word}' not found" ]`
+    };
+}
+
+const getRecoverableFailureResponseMock = (word: string | undefined) => {
+    return {
+        status: 400,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        contentType: 'application/json',
+        body: `[ "Something went wrong" ]`
+    };
+};
+
+let getResponseMock = getSuccessResponseMock;
+
 const handler = (request: HTTPRequest) => {
     if (request.url().startsWith('https://api.dictionaryapi.dev/api/v2/entries/en/')) {
         const word = request.url().split('/').pop();
-        request.respond(getRequestMock(word));
+        request.respond(getResponseMock(word));
     } else request.continue();
 };
 
@@ -72,14 +92,7 @@ afterEach(async () => {
 });
 
 test('Confirm words are published in the reversed order, and that successfully resolved words have respective class', async () => {
-    getRequestMock = (word: string | undefined) => {
-        return {
-            status: 200,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            contentType: 'application/json',
-            body: `[{ "word": "${word}", "meanings": [ { "partOfSpeech": "stub", "definitions": [ { "definition": "stub" } ]}]}]`
-        };
-    };
+    getResponseMock = getSuccessResponseMock;
 
     const first_word = (await send_first_n_letters(3))!;
 
@@ -99,14 +112,7 @@ test('Confirm words are published in the reversed order, and that successfully r
 }, timeout);
 
 test('Confirm failed word has respective class', async () => {
-    getRequestMock = (word: string | undefined) => {
-        return {
-            status: 404,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            contentType: 'application/json',
-            body: `[ "Word '${word}' not found" ]`
-        };
-    };
+    getResponseMock = getFailureResponseMock;
 
     const first_word = (await send_first_n_letters(3))!;
 
@@ -116,14 +122,7 @@ test('Confirm failed word has respective class', async () => {
 }, timeout);
 
 test('Confirm recoverably failed words have respective class, their occurrence yields network issues disclaimer to appear, and its successful resending yields class modification', async () => {
-    getRequestMock = (word: string | undefined) => {
-        return {
-            status: 400,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            contentType: 'application/json',
-            body: `[ "Something went wrong" ]`
-        };
-    };
+    getResponseMock = getRecoverableFailureResponseMock;
 
     const first_word = (await send_first_n_letters(3))!;
 
@@ -144,14 +143,7 @@ test('Confirm recoverably failed words have respective class, their occurrence y
     const disclaimer_eh = await page.waitForSelector('#network-issues-disclaimer', { visible: true, timeout: 10000 });
     expect(disclaimer_eh).toBeDefined();
 
-    getRequestMock = (word: string | undefined) => {
-        return {
-            status: 200,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            contentType: 'application/json',
-            body: `[{ "word": "${word}", "meanings": [ { "partOfSpeech": "stub", "definitions": [ { "definition": "stub" } ]}]}]`
-        };
-    };
+    getResponseMock = getSuccessResponseMock;
 
     const resend_btn_eh = await page.waitForSelector('#resend', { visible: true, timeout: 10000 });
     expect(resend_btn_eh).toBeDefined();
