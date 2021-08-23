@@ -5,6 +5,8 @@
 import { ElementHandle, HTTPRequest } from 'puppeteer';
 
 const timeout = 10000;
+let speedup = 100;
+let response_timeout = 0;
 
 async function getPropertyUnsafe(eh: ElementHandle, property: string): Promise<string> {
     return await (await eh.getProperty(property))!.jsonValue();
@@ -42,7 +44,9 @@ let getResponseMock = getSuccessResponseMock;
 const handler = (request: HTTPRequest) => {
     if (request.url().startsWith('https://api.dictionaryapi.dev/api/v2/entries/en/')) {
         const word = request.url().split('/').pop();
-        request.respond(getResponseMock(word));
+        setTimeout(() => {
+            request.respond(getResponseMock(word));
+        }, response_timeout);
     } else request.continue();
 };
 
@@ -93,7 +97,7 @@ const assert_score = async (result_eh: ElementHandle | null, score: number): Pro
 
 beforeAll(async () => {
     await page.goto("http://localhost:8080/play.html");
-    await page.exposeFunction("_puppeteerGetSpeedup", () => { return 100; });
+    await page.exposeFunction("_puppeteerGetSpeedup", () => { return speedup; });
 });
 
 beforeEach(async () => {
@@ -133,6 +137,8 @@ test('Confirm 3- and 4-letter failed words and 5- and 6-letter recoverably faile
     await send_first_n_letters(3);
     await send_first_n_letters(4);
 
+    await page.waitForSelector('.failure ~ .failure');
+
     getResponseMock = getRecoverableFailureResponseMock;
 
     await send_first_n_letters(5);
@@ -155,3 +161,28 @@ test('Confirm 3- and 4-letter failed words and 5- and 6-letter recoverably faile
 
     await assert_score(result_eh, 7);
 }, timeout);
+
+test('Confirm pending word yields pending result, and the result is updated afterwards', async () => {
+    getResponseMock = getSuccessResponseMock;
+
+    await send_first_n_letters(3);
+
+    response_timeout = 1250;
+
+    const pending_word = send_first_n_letters(4);
+
+    const result_eh = await page.waitForSelector('.pending-result', { visible: true });
+    await expect(result_eh).toBeDefined();
+
+    const result_text = await getPropertyUnsafe(result_eh!, 'textContent');
+    expect(result_text).toBeDefined();
+
+    const match_number = /\d+$/g;
+    const results = result_text!.match(match_number);
+    expect(results).toBeNull();
+
+    await pending_word;
+    const result_eh_resolved = await page.waitForSelector('#result:not(.pending-result)');
+    await assert_score(result_eh_resolved, 3);
+}, timeout);
+
