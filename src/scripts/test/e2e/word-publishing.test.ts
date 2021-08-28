@@ -56,7 +56,7 @@ const sendByKeyboard = async () => {
     return page.keyboard.press('Enter');
 }
 
-const send_first_n_letters = async (n: number, send: typeof sendByKeyboard): Promise<string> => {
+const type_first_n_letters = async (n: number): Promise<string> => {
     const letters = await page.$$('.cell');
     let counter = 0;
     let word = '';
@@ -66,6 +66,11 @@ const send_first_n_letters = async (n: number, send: typeof sendByKeyboard): Pro
         counter++;
         if (counter == n) break;
     }
+    return word;
+};
+
+const send_first_n_letters = async (n: number, send: typeof sendByKeyboard): Promise<string> => {
+    const word = (await type_first_n_letters(n))!;
     return send()
         .then(() => {
             return page.waitForSelector('.pending-score', { timeout: 10 });
@@ -112,3 +117,32 @@ test('Confirm words are published by pressing Enter from the keyboard', async ()
     await page.waitForSelector('.success');
 }, timeout);
 
+test('Confirm words are not published if there are less than 3 letters or if there are invalid symbols', async () => {
+    getResponseMock = getSuccessResponseMock;
+    const expect_no_words_published = async () => {
+        let success = await page.$$('.success');
+        let failure = await page.$$('.failure');
+        let pending = await page.$$('.pending-score');
+        const expect_zero_length = (arr: typeof success) => {
+            expect(arr).toBeDefined();
+            expect(arr!.length).toBe(0);
+        };
+        expect_zero_length(success);
+        expect_zero_length(failure);
+        expect_zero_length(pending);
+    };
+
+    await type_first_n_letters(2);
+    await sendByKeyboard();
+    await expect_no_words_published();
+    await sendByButton();
+    await expect_no_words_published();
+
+    const input = (await page.$('input'))!;
+    input.type("$#2!");
+
+    await sendByKeyboard();
+    await expect_no_words_published();
+    await sendByButton();
+    await expect_no_words_published();
+}, timeout);
