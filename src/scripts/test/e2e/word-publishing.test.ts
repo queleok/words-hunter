@@ -10,7 +10,7 @@ async function getPropertyUnsafe(eh: ElementHandle, property: string): Promise<s
     return await (await eh.getProperty(property))!.jsonValue();
 }
 
-const getSuccessResponseMock = (word: string | undefined) => {
+const getResponseMock = (word: string | undefined) => {
     return {
         status: 200,
         headers: { "Access-Control-Allow-Origin": "*" },
@@ -18,26 +18,6 @@ const getSuccessResponseMock = (word: string | undefined) => {
         body: `[{ "word": "${word}", "meanings": [ { "partOfSpeech": "stub", "definitions": [ { "definition": "stub" } ]}]}]`
     };
 };
-
-const getFailureResponseMock = (word: string | undefined) => {
-    return {
-        status: 404,
-        headers: { "Access-Control-Allow-Origin": "*" },
-        contentType: 'application/json',
-        body: `[ "Word '${word}' not found" ]`
-    };
-}
-
-const getRecoverableFailureResponseMock = (word: string | undefined) => {
-    return {
-        status: 400,
-        headers: { "Access-Control-Allow-Origin": "*" },
-        contentType: 'application/json',
-        body: `[ "Something went wrong" ]`
-    };
-};
-
-let getResponseMock = getSuccessResponseMock;
 
 const handler = (request: HTTPRequest) => {
     if (request.url().startsWith('https://api.dictionaryapi.dev/api/v2/entries/en/')) {
@@ -73,7 +53,7 @@ const send_first_n_letters = async (n: number, send: typeof sendByKeyboard): Pro
     const word = (await type_first_n_letters(n))!;
     return send()
         .then(() => {
-            return page.waitForSelector('.pending-score', { timeout: 10 });
+            return page.waitForSelector('.pending-score', { timeout: 50 });
         })
         .then((pending_word) => {
             if (pending_word) return getPropertyUnsafe(pending_word, 'textContent');
@@ -106,19 +86,16 @@ afterEach(async () => {
 });
 
 test('Confirm words are published by pressing send button', async () => {
-    getResponseMock = getSuccessResponseMock;
     await send_first_n_letters(3, sendByButton);
     await page.waitForSelector('.success');
 }, timeout);
 
 test('Confirm words are published by pressing Enter from the keyboard', async () => {
-    getResponseMock = getSuccessResponseMock;
     await send_first_n_letters(3, sendByKeyboard);
     await page.waitForSelector('.success');
 }, timeout);
 
 test('Confirm words are not published if there are less than 3 letters or if there are invalid symbols', async () => {
-    getResponseMock = getSuccessResponseMock;
     const expect_no_words_published = async () => {
         let success = await page.$$('.success');
         let failure = await page.$$('.failure');

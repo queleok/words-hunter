@@ -63,7 +63,7 @@ const send_first_n_letters = async (n: number): Promise<string> => {
     const send = (await page.$('#publish'))!;
     return send.click()
         .then(() => {
-            return page.waitForSelector('.pending-score', { timeout: 10 });
+            return page.waitForSelector('.pending-score', { timeout: 50 });
         })
         .then((pending_word) => {
             if (pending_word) return getPropertyUnsafe(pending_word, 'textContent');
