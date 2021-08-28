@@ -123,6 +123,7 @@ test('Confirm words are not published if there are less than 3 letters or if the
         let success = await page.$$('.success');
         let failure = await page.$$('.failure');
         let pending = await page.$$('.pending-score');
+        let recoverable_failure = await page.$$('.network-failure');
         const expect_zero_length = (arr: typeof success) => {
             expect(arr).toBeDefined();
             expect(arr!.length).toBe(0);
@@ -130,6 +131,7 @@ test('Confirm words are not published if there are less than 3 letters or if the
         expect_zero_length(success);
         expect_zero_length(failure);
         expect_zero_length(pending);
+        expect_zero_length(recoverable_failure);
     };
 
     await type_first_n_letters(2);
