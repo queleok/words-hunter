@@ -1,10 +1,10 @@
-import { ElementHandle, HTTPRequest } from 'puppeteer';
+import { JSHandle, ElementHandle, HTTPRequest } from 'puppeteer';
 
 const timeout = 10000;
 
-async function getPropertyUnsafe(eh: ElementHandle, property: string): Promise<string> {
-    return await (await eh.getProperty(property))!.jsonValue();
-}
+async function getTextContent(eh: ElementHandle): Promise<string> {
+    return (await eh.evaluate(domElem => domElem.textContent))!;
+};
 
 beforeAll(async () => {
     await page.goto("http://localhost:8080/play.html");
@@ -33,7 +33,7 @@ test('Ensure validated words are added correctly', async () => {
         let word = '';
         for (const letter of letters) {
             await letter.click();
-            word += await getPropertyUnsafe(letter, 'textContent');
+            word += await getTextContent(letter);
             counter++;
             if (counter == n) break;
         }
@@ -46,17 +46,17 @@ test('Ensure validated words are added correctly', async () => {
     const first_word = (await send_first_n_letters(3))!;
 
     const first_word_eh = (await page.waitForSelector('.success'))!;
-    const published_first_word = (await getPropertyUnsafe(first_word_eh, 'textContent'))!;
+    const published_first_word = await getTextContent(first_word_eh);
     expect(published_first_word).toBe(first_word);
 
     const second_word = (await send_first_n_letters(4))!;
 
     const moved_first_word_eh = (await page.waitForSelector('.success ~ .success'))!;
-    const moved_published_first_word = (await getPropertyUnsafe(moved_first_word_eh, 'textContent'))!;
+    const moved_published_first_word = await getTextContent(moved_first_word_eh);
     expect(moved_published_first_word).toBe(first_word);
 
     const second_word_eh = (await page.$('.success'))!;
-    const published_second_word = (await getPropertyUnsafe(second_word_eh, 'textContent'))!;
+    const published_second_word = await getTextContent(second_word_eh);
     expect(published_second_word).toBe(second_word);
 
     page.off('request', success_handler);
@@ -87,7 +87,7 @@ test('Ensure failed words are added correctly', async () => {
         let word = '';
         for (const letter of letters) {
             await letter.click();
-            word += await getPropertyUnsafe(letter, 'textContent');
+            word += await getTextContent(letter);
             counter++;
             if (counter == n) break;
         }
@@ -100,17 +100,17 @@ test('Ensure failed words are added correctly', async () => {
     const first_word = (await send_first_n_letters(3))!;
 
     const first_word_eh = (await page.waitForSelector('.failure'))!;
-    const published_first_word = (await getPropertyUnsafe(first_word_eh, 'textContent'))!;
+    const published_first_word = await getTextContent(first_word_eh);
     expect(published_first_word).toBe(first_word);
 
     const second_word = (await send_first_n_letters(4))!;
 
     const moved_first_word_eh = (await page.waitForSelector('.failure ~ .failure'))!;
-    const moved_published_first_word = (await getPropertyUnsafe(moved_first_word_eh, 'textContent'))!;
+    const moved_published_first_word = await getTextContent(moved_first_word_eh);
     expect(moved_published_first_word).toBe(first_word);
 
     const second_word_eh = (await page.$('.failure'))!;
-    const published_second_word = (await getPropertyUnsafe(second_word_eh, 'textContent'))!;
+    const published_second_word = await getTextContent(second_word_eh);
     expect(published_second_word).toBe(second_word);
 
     page.off('request', failure_handler);

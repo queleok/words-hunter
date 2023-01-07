@@ -1,10 +1,7 @@
 module.exports = {
     preset: "jest-puppeteer",
     globals: {
-        URL: "http://localhost:8080",
-        'ts-jest': {
-            useESM: true
-        }
+        URL: "http://localhost:8080"
     },
     roots: [
         "<rootDir>/src/scripts"
@@ -14,7 +11,11 @@ module.exports = {
         "**/?(*.)+(spec|test).+(ts|tsx|js)"
     ],
     transform: {
-        "^.+\\.(js|ts|tsx)$": "ts-jest"
+        "^.+\\.(js|ts|tsx)$": [
+            'ts-jest', {
+                useESM: true
+            }
+        ]
     },
     collectCoverage: true,
     extensionsToTreatAsEsm: ['.ts'],
