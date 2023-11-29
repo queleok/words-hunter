@@ -1,5 +1,5 @@
 # Words Hunter
-This is a JS implementation of a simple word game in which a player is ought to compose
+This is a TS implementation of a simple word game in which a player is ought to compose
 as much different words as he can from the given set of letters. The goal of the project
 is to help people learning English to practice words memoization and thus to extend the
 vocabulary (eventually).
@@ -10,7 +10,7 @@ she can;
 - Only a-z symbols are allowed in the input;
 - The player gets 1 point for the first 3 letters of every word, and 1 more point for every
 consecutive letter, so e.g. the word ```set``` gives 1 point, while the word ```scores```
-gives 6 points;
+gives 4 points;
 - Different forms of the same word (e.g. nouns in singular and plural forms, or verbs in
 present and past tenses) are considered as different words;
 - The game relies on the free unofficial API for the google dictionaries, which has some
