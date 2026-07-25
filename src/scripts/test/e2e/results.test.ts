@@ -8,9 +8,9 @@ const timeout = 10000;
 let speedup = 100;
 let response_timeout = 0;
 
-async function getPropertyUnsafe(eh: ElementHandle, property: string): Promise<string> {
-    return await (await eh.getProperty(property))!.jsonValue();
-}
+async function getTextContent(eh: ElementHandle): Promise<string> {
+    return (await eh.evaluate(domElem => domElem.textContent))!;
+};
 
 const getSuccessResponseMock = (word: string | undefined) => {
     return {
@@ -56,17 +56,17 @@ const send_first_n_letters = async (n: number): Promise<string> => {
     let word = '';
     for (const letter of letters) {
         await letter.click();
-        word += await getPropertyUnsafe(letter, 'textContent');
+        word += await getTextContent(letter);
         counter++;
         if (counter == n) break;
     }
     const send = (await page.$('#publish'))!;
     return send.click()
         .then(() => {
-            return page.waitForSelector('.pending-score', { timeout: 50 });
+            return page.waitForSelector('.pending-score', { timeout: 200 });
         })
         .then((pending_word) => {
-            if (pending_word) return getPropertyUnsafe(pending_word, 'textContent');
+            if (pending_word) return getTextContent(pending_word);
             else Promise.reject("Could not resolve pending word element handle");
         })
         .then((text_content) => {
@@ -82,7 +82,7 @@ const send_first_n_letters = async (n: number): Promise<string> => {
 const assert_score = async (result_eh: ElementHandle | null, score: number): Promise<boolean> => {
     expect(result_eh).toBeDefined();
 
-    const result_text = await getPropertyUnsafe(result_eh!, 'textContent');
+    const result_text = await getTextContent(result_eh!);
     expect(result_text).toBeDefined();
 
     const match_number = /\d+$/g;
@@ -174,7 +174,7 @@ test('Confirm pending word yields pending result, and the result is updated afte
     const result_eh = await page.waitForSelector('.pending-result', { visible: true });
     await expect(result_eh).toBeDefined();
 
-    const result_text = await getPropertyUnsafe(result_eh!, 'textContent');
+    const result_text = await getTextContent(result_eh!);
     expect(result_text).toBeDefined();
 
     const match_number = /\d+$/g;

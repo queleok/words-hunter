@@ -21,5 +21,8 @@ module.exports = {
     extensionsToTreatAsEsm: ['.ts'],
     moduleNameMapper: {
         "./generate-letters.js": "./generate-letters.ts",
-    }
+    },
+    // FIX: Remove transformIgnorePatterns to force transformation of all node_modules contents, 
+    // resolving deep dependency syntax errors (like those in puppeteer).
+    transformIgnorePatterns: [],
 }

@@ -59,7 +59,7 @@ const send_first_n_letters = async (n: number): Promise<string> => {
     const send = (await page.$('#publish'))!;
     return send.click()
         .then(() => {
-            return page.waitForSelector('.pending-score', { timeout: 50 });
+            return page.waitForSelector('.pending-score', { timeout: 200 });
         })
         .then((pending_word) => {
             if (pending_word) return getTextContent(pending_word);
@@ -133,11 +133,11 @@ test('Confirm recoverably failed words have respective class, their occurrence y
     const second_word = (await send_first_n_letters(4))!;
 
     const moved_first_word_eh = (await page.waitForSelector('.network-failure ~ .network-failure'))!;
-    const moved_published_first_word = (await getPropertyUnsafe(moved_first_word_eh, 'textContent'))!;
+    const moved_published_first_word = await getTextContent(moved_first_word_eh);
     expect(moved_published_first_word).toBe(first_word);
 
     const second_word_eh = (await page.$('.network-failure'))!;
-    const published_second_word = (await getPropertyUnsafe(second_word_eh, 'textContent'))!;
+    const published_second_word = await getTextContent(second_word_eh);
     expect(published_second_word).toBe(second_word);
 
     const disclaimer_eh = await page.waitForSelector('#network-issues-disclaimer', { visible: true, timeout: 10000 });
@@ -151,7 +151,7 @@ test('Confirm recoverably failed words have respective class, their occurrence y
 
     const validated_word_eh = await page.waitForSelector('.success ~ .success');
     expect(validated_word_eh).toBeDefined();
-    const published_validated_word = (await getPropertyUnsafe(validated_word_eh!, 'textContent'))!;
+    const published_validated_word = await getTextContent(validated_word_eh!);
     expect(published_validated_word).toBe(first_word);
 
     const validated_words = await page.$$('.success');

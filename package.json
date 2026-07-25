@@ -32,17 +32,23 @@
     "url": "https://github.com/queleok/words-hunter/issues"
   },
   "homepage": "https://github.com/queleok/words-hunter#readme",
-  "devDependencies": {
-    "@types/jest": "^29.2.5",
-    "@types/jest-environment-puppeteer": "^5.0.3",
-    "http-server": "^14.1.1",
-    "jest": "^29.3.1",
-    "jest-puppeteer": "^6.2.0",
-    "puppeteer": "^19.4.1",
-    "sass": "^1.57.1",
-    "typescript": "^4.9.4"
-  },
   "dependencies": {
-    "ts-jest": "^29.0.3"
+    "sass": "^1.102.0",
+    "typescript": "^6.0.3"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true,
+    "fsevents@2.3.3": true,
+    "unrs-resolver@1.12.2": true,
+    "puppeteer@25.3.0": true
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/jest-environment-puppeteer": "^5.0.6",
+    "http-server": "^14.1.1",
+    "jest": "^29.7.0",
+    "jest-puppeteer": "^11.0.0",
+    "puppeteer": "^25.3.0",
+    "ts-jest": "^29.4.12"
   }
 }

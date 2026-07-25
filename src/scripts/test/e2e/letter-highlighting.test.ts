@@ -6,11 +6,11 @@ import { ElementHandle, HTTPRequest } from 'puppeteer';
 
 type LetterIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
 
-const timeout = process.env.SLOWMO ? 60000 : 10000;
+const timeout = process.env.SLOWMO ? 120000 : 10000;
 
-async function getPropertyUnsafe(eh: ElementHandle, property: string): Promise<string> {
-    return await (await eh.getProperty(property))!.jsonValue();
-}
+async function getTextContent(eh: ElementHandle): Promise<string> {
+    return (await eh.evaluate(domElem => domElem.textContent))!;
+};
 
 const getResponseMock = (word: string | undefined) => {
     return {
@@ -38,7 +38,7 @@ const press_first_n_letter_buttons = async (n: number): Promise<string> => {
     let word = '';
     for (const letter of letters) {
         await letter.click();
-        word += await getPropertyUnsafe(letter, 'textContent');
+        word += await getTextContent(letter);
         counter++;
         if (counter == n) break;
     }
@@ -49,10 +49,10 @@ const send_first_n_letters = async (n: number): Promise<string> => {
     const word = (await press_first_n_letter_buttons(n))!;
     return send()
         .then(() => {
-            return page.waitForSelector('.pending-score', { timeout: 50 });
+            return page.waitForSelector('.pending-score', { timeout: 200 });
         })
         .then((pending_word) => {
-            if (pending_word) return getPropertyUnsafe(pending_word, 'textContent');
+            if (pending_word) return getTextContent(pending_word);
             else Promise.reject("Could not resolve pending word element handle");
         })
         .then((text_content) => {
@@ -68,7 +68,7 @@ const send_first_n_letters = async (n: number): Promise<string> => {
 const press_nth_letter_button = async (ix: LetterIndex): Promise<string> => {
     const letters = await page.$$('.cell');
     await letters[ix].click();
-    const letter = await getPropertyUnsafe(letters[ix], 'textContent');
+    const letter = await getTextContent(letters[ix]);
     return letter;
 }
 
@@ -76,7 +76,7 @@ const get_sorted_generated_letters = async () => {
     const letters = await page.$$('.cell');
     let word = '';
     for (const letter_eh of letters) {
-        const letter = await getPropertyUnsafe(letter_eh, 'textContent');
+        const letter = await getTextContent(letter_eh);
         word += letter;
     };
     return [...word].sort();
@@ -84,7 +84,7 @@ const get_sorted_generated_letters = async () => {
 
 beforeAll(async () => {
     await page.goto("http://localhost:8080/play.html");
-    await page.exposeFunction("_puppeteerGetSpeedup", () => { return 100; });
+    await page.exposeFunction("_puppeteerGetSpeedup", () => { return 1; });
 });
 
 beforeEach(async () => {
@@ -127,7 +127,7 @@ test('Confirm pressing a letter button toggles its highlighting', async () => {
         return async (highlighted: Array<ElementHandle>) => {
             let word = '';
             for (const letter_eh of highlighted) {
-                const letter = await getPropertyUnsafe(letter_eh, 'textContent');
+                const letter = await getTextContent(letter_eh);
                 expect(letter).toBeDefined();
                 word += letter;
             }
@@ -139,7 +139,7 @@ test('Confirm pressing a letter button toggles its highlighting', async () => {
         return async (highlighted: Array<ElementHandle>) => {
             let word = '';
             for (const letter_eh of highlighted) {
-                const letter = await getPropertyUnsafe(letter_eh, 'textContent');
+                const letter = await getTextContent(letter_eh);
                 expect(letter).toBeDefined();
                 word += letter;
             }
@@ -255,7 +255,7 @@ test('Confirm pressing a letter button toggles its highlighting', async () => {
     await page.keyboard.up('Control');
 
     await send();
-    await page.waitForSelector('.failure', { timeout: 50 });
+    await page.waitForSelector('.failure', { timeout: 200 });
     await confirm_n_highlighted(0);
     await confirm_input_letters_equal('');
 
@@ -271,5 +271,12 @@ test('Confirm pressing a letter button toggles its highlighting', async () => {
     await press_nth_letter_button(2);
     await confirm_n_highlighted(all_third_letters.length);
     await confirm_input_letters_equal(all_third_letters);
+
+    await select(0, all_third_letters.length);
+    const even_more_letters = generated_letters.join('').substr(0, 12);
+    await input.type(even_more_letters);
+    await confirm_n_highlighted(even_more_letters.length)
+        .then(confirm_highlighted_sorted_letters_are(even_more_letters));
+    await confirm_input_letters_equal(even_more_letters);
 }, timeout);
 

@@ -6,9 +6,9 @@ import { ElementHandle, HTTPRequest } from 'puppeteer';
 
 const timeout = 10000;
 
-async function getPropertyUnsafe(eh: ElementHandle, property: string): Promise<string> {
-    return await (await eh.getProperty(property))!.jsonValue();
-}
+async function getTextContent(eh: ElementHandle): Promise<string> {
+    return (await eh.evaluate(domElem => domElem.textContent))!;
+};
 
 const getResponseMock = (word: string | undefined) => {
     return {
@@ -42,7 +42,7 @@ const type_first_n_letters = async (n: number): Promise<string> => {
     let word = '';
     for (const letter of letters) {
         await letter.click();
-        word += await getPropertyUnsafe(letter, 'textContent');
+        word += await getTextContent(letter);
         counter++;
         if (counter == n) break;
     }
@@ -53,10 +53,10 @@ const send_first_n_letters = async (n: number, send: typeof sendByKeyboard): Pro
     const word = (await type_first_n_letters(n))!;
     return send()
         .then(() => {
-            return page.waitForSelector('.pending-score', { timeout: 50 });
+            return page.waitForSelector('.pending-score', { timeout: 200 });
         })
         .then((pending_word) => {
-            if (pending_word) return getPropertyUnsafe(pending_word, 'textContent');
+            if (pending_word) return getTextContent(pending_word);
             else Promise.reject("Could not resolve pending word element handle");
         })
         .then((text_content) => {
