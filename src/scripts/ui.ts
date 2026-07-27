@@ -77,12 +77,18 @@ class WordSynchronizer {
             this.word.splice(index, 1);
             this.input.value = this.input.value.slice(0, index) + this.input.value.slice(index + 1);
             this.evaluateRehighlighting(lw);
+            return true;
         }
+
+        return false;
     }
 
     push = (lw: LetterWidget) => {
+        if (this.input.value.length >= 16) return false;
+
         this.word.push({ widget: lw, letter: lw.getLetter() });
         this.input.value += lw.getLetter();
+        return true;
     }
 
     private evaluateRehighlighting = (lw: LetterWidget) => {
@@ -239,12 +245,10 @@ class LetterWidget {
     }
 
     private toggleHighlighting = (e: Event) => {
-        if (this.highlighted) {
-            this.dehighlight();
+        if (this.dehighlight()) {
             this.sync.pop(this);
-        } else {
+        } else if (this.sync.push(this)) {
             this.highlight();
-            this.sync.push(this);
         }
 
         e.stopPropagation();
