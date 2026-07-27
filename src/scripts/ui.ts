@@ -84,7 +84,7 @@ class WordSynchronizer {
     }
 
     push = (lw: LetterWidget) => {
-        if (this.input.value.length >= 16) return false;
+        if (this.word.length >= 16) return false;
 
         this.word.push({ widget: lw, letter: lw.getLetter() });
         this.input.value += lw.getLetter();
