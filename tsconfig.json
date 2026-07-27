@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
-    "outDir": "./site",
+    "rootDir": "src/scripts",
+    "outDir": "site",
     "target": "es2018",
     "inlineSourceMap": true,
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "strict": true,
-    "allowJs": true
+    "allowJs": true,
+    "types": ["jest", "node", "jest-environment-puppeteer", "puppeteer"]
   },
   "include": ["./src/**/*"],
   "exclude": [
