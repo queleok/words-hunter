@@ -162,7 +162,7 @@ async function reset() {
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
     queue = new PromiseQueue(time_scale);
     // Set the validation service to Wiktionary for this run
-    queue.setValidator('wiktionary');
+    // queue.setValidator('wiktionary');
 
     const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
     disclaimer.classList.add('hidden');
