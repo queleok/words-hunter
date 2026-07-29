@@ -6,6 +6,20 @@ type Node = {
     next?: Node
 }
 
+// --- Unofficial Google Dict API types ---
+interface Definition {
+    definition: string
+}
+
+interface Meaning {
+    partOfSpeech: string,
+    definitions: Array<Definition>
+}
+
+interface WordData {
+    meanings: Array<Meaning>
+}
+
 // --- Wiktionary API Types ---
 interface WiktionaryPageInfo {
     title: string;
@@ -16,9 +30,71 @@ interface WiktionaryResponse {
     query: {
         pages: Array<WiktionaryPageInfo>;
     };
-    // Other fields might exist but are not strictly needed for existence check
 }
-// -----------------------------
+
+// -------------------
+
+/**
+ * IFetchAdapter defines the contract for all word validation strategies.
+ */
+interface IFetchAdapter {
+    url(word: string): string;
+    validate(word: string): Promise<FetchResult>;
+}
+
+/**
+ * DictionaryFetchAdapter implements IFetchAdapter using a standard dictionary API (e.g., Google).
+ */
+class DictionaryFetchAdapter implements IFetchAdapter {
+    url(word: string): string {
+        return `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
+    }
+
+    async validate(word: string): Promise<FetchResult> {
+        const response = await fetch(this.url(word));
+
+        if (response.ok) {
+            const data = await response.json();
+            if (validateWord(data)) {
+                return "success";
+            } else {
+                return "validation-failure";
+            }
+        } else if (response.status === 404) {
+            return "no-definition";
+        } else {
+            // Handle other HTTP errors
+            console.error("Dictionary API fetch failed with response:", response);
+            return "network-failure";
+        }
+    }
+}
+
+/**
+ * WiktionaryFetchAdapter implements IFetchAdapter using the Wiktionary API.
+ */
+class WiktionaryFetchAdapter implements IFetchAdapter {
+    url(word: string): string {
+        return `https://en.wiktionary.org/w/api.php?action=query&format=json&formatversion=2&titles=${encodeURIComponent(word)}&origin=*`;
+    }
+
+    async validate(word: string): Promise<FetchResult> {
+        const response = await fetch(this.url(word));
+        if (!response.ok) {
+            console.error("Wiktionary API fetch failed with response:", response);
+            return "network-failure";
+        }
+
+        const data: WiktionaryResponse = await response.json();
+
+        // Check if the word exists in Wiktionary
+        if (isWordPresentInWiktionary(data)) {
+            return "success";
+        } else {
+            return "no-definition"; // Use no-definition for non-existence
+        }
+    }
+}
 
 
 class PromiseQueue {
@@ -27,19 +103,14 @@ class PromiseQueue {
     private length: number;
     private depletion_cb?: () => void;
     private time_scale: number;
-    private validatorType: 'dictionary' | 'wiktionary';
+    private validator: IFetchAdapter;
 
-    constructor(time_scale = 1) {
+    constructor(validator: IFetchAdapter, time_scale = 1) {
         this.curr = { item: Promise.resolve("success")  };
         this.begin = { item: Promise.resolve("success"), next: this.curr };
         this.length = 0;
         this.time_scale = time_scale;
-        // Default to dictionary API for backward compatibility if not set externally
-        this.validatorType = 'dictionary';
-    }
-
-    setValidator(type: 'dictionary' | 'wiktionary') {
-        this.validatorType = type;
+        this.validator = validator;
     }
 
     enqueue(this: PromiseQueue, word: string): Promise<FetchResult> {
@@ -47,46 +118,10 @@ class PromiseQueue {
         const q = this;
         const ret = new Promise<FetchResult>( function(resolve, reject) {
             q.curr.item.finally( () => {
-                setTimeout( function() {
-                    if (q.validatorType === 'dictionary') {
-                        // --- Dictionary API Path ---
-                        fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + word)
-                            .then(function(response) {
-                                if (response.ok) return response.json();
-                                else             return Promise.reject(response.status);
-                            })
-                            .then(function(data) {
-                                if (validateWord(data)) resolve("success");
-                                else                    resolve("validation-failure");
-                            })
-                            .catch(function(error) {
-                                if (error === 404) resolve("no-definition");
-                                else               resolve("network-failure");
-                            })
-                            .finally(() => { q.dequeue(); });
-
-                    } else if (q.validatorType === 'wiktionary') {
-                        // --- Wiktionary API Path ---
-                        const wiktionaryUrl = `https://en.wiktionary.org/w/api.php?action=query&format=json&formatversion=2&titles=${encodeURIComponent(word)}&origin=*`;
-
-                        fetch(wiktionaryUrl)
-                            .then((response: Response) => {
-                                if (!response.ok) throw new Error('Network response was not ok');
-                                return response.json() as Promise<WiktionaryResponse>;
-                            })
-                            .then((data: WiktionaryResponse) => {
-                                const isPresent = isWordPresentInWiktionary(data);
-                                if (isPresent) resolve("success");
-                                else resolve("no-definition"); // Use no-definition for non-existence
-                            })
-                            .catch(() => {
-                                resolve("network-failure");
-                            })
-                            .finally(() => { q.dequeue(); });
-                    } else {
-                        // Should not happen
-                        q.curr.item.finally(() => q.dequeue());
-                    }
+                setTimeout( () => {
+                    q.validator.validate(word)
+                        .then((result: FetchResult) => resolve(result))
+                        .finally( () => q.dequeue())
                 }, 500 * q.time_scale);
             });
         });
@@ -112,21 +147,8 @@ class PromiseQueue {
 
 }
 
-interface Definition {
-    definition: string
-}
-
-interface Meaning {
-    partOfSpeech: string,
-    definitions: Array<Definition>
-}
-
-interface Word {
-    meanings: Array<Meaning>
-}
-
-function validateWord(words: Array<Word>): boolean {
-    const is_there_non_abbreviation = words.some( (word: Word) =>
+function validateWord(words: Array<WordData>): boolean {
+    const is_there_non_abbreviation = words.some( (word: WordData) =>
         word.meanings.length == 0 
         || !word.meanings.every( meaning =>
             (meaning.partOfSpeech == "abbreviation")
@@ -139,10 +161,7 @@ function isWordPresentInWiktionary(response: WiktionaryResponse): boolean {
     const query = response?.query;
     if (!query) return false;
 
-    // Check if the 'pages' object exists and has entries. 
-    // If pages exist, it means MediaWiki found an entry for that title.
     return query.pages.length > 0 && query.pages.some((p) => p.hasOwnProperty('pageid'));
 }
 
-
-export {PromiseQueue, FetchResult};
+export {PromiseQueue, FetchResult, IFetchAdapter, DictionaryFetchAdapter, WiktionaryFetchAdapter};

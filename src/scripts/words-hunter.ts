@@ -2,11 +2,12 @@
 
 import { generate, shuffle } from './generate-letters.js';
 import { formatTime, formatResult, escapeMissingLetters } from './format.js';
-import { PromiseQueue, FetchResult } from './queue.js';
+import { PromiseQueue, FetchResult, IFetchAdapter, DictionaryFetchAdapter, WiktionaryFetchAdapter } from './queue.js';
 import { LetterWidget, WordSynchronizer } from './ui.js';
 
 let freqmap = Array(26).fill(0);
-let queue = new PromiseQueue();
+let queue: PromiseQueue;
+let validator: IFetchAdapter;
 let time_scale = 1.0;
 
 declare global {
@@ -33,9 +34,8 @@ function getFetchResultHandler(word: Element) {
         switch (fetch_result) {
             case "success":
                 word.setAttribute('class', 'score success');
-                // Note: The API used here is the Google Dictionary API, which might need to be updated if we switch entirely to Wiktionary for display purposes.
-                // For now, we keep the existing link structure but acknowledge it's tied to the old validation method.
-                word.setAttribute('href', `https://api.dictionaryapi.dev/api/v2/entries/en/${word.textContent}`); 
+                // The API link is now less critical as validation is abstracted, but we keep it for display consistency.
+                word.setAttribute('href', validator.url(word.textContent));
                 word.setAttribute('target', '_blank');
                 break;
             case "validation-failure":
@@ -91,7 +91,7 @@ function reportResults(results: HTMLElement) {
 
 function stopTimer(tmr: ReturnType<typeof setInterval>
         , results: HTMLElement
-        , synchronizer: WordSynchronizer) 
+        , synchronizer: WordSynchronizer)
 {
     // stop timer
     clearInterval(tmr);
@@ -160,9 +160,11 @@ function publishWord(word: string) {
 
 async function reset() {
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
-    queue = new PromiseQueue(time_scale);
-    // Set the validation service to Wiktionary for this run
-    // queue.setValidator('wiktionary');
+
+    // --- Refactoring Step: Instantiate the desired validator and inject it into PromiseQueue ---
+    // We will default to using DictionaryFetchAdapter for this run, but could easily switch here.
+    validator = new DictionaryFetchAdapter();
+    queue = new PromiseQueue(validator, time_scale);
 
     const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
     disclaimer.classList.add('hidden');
