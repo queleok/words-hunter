@@ -9,6 +9,7 @@ let freqmap = Array(26).fill(0);
 let queue: PromiseQueue;
 let validator: IFetchAdapter;
 let time_scale = 1.0;
+let currentValidatorType: 'dictionary' | 'wiktionary' = 'dictionary'; // New state variable
 
 declare global {
     interface Window { _puppeteerGetSpeedup: () => Promise<number>; }
@@ -34,7 +35,6 @@ function getFetchResultHandler(word: Element) {
         switch (fetch_result) {
             case "success":
                 word.setAttribute('class', 'score success');
-                // The API link is now less critical as validation is abstracted, but we keep it for display consistency.
                 word.setAttribute('href', validator.url(word.textContent));
                 word.setAttribute('target', '_blank');
                 break;
@@ -158,12 +158,49 @@ function publishWord(word: string) {
     }
 }
 
+function toggleSettings() {
+    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
+    if (settingsPanel) {
+        settingsPanel.classList.toggle('hidden');
+    }
+}
+
+function changeValidator(newType: 'dictionary' | 'wiktionary') {
+    currentValidatorType = newType;
+    console.log(`Validator switched to ${newType}`);
+    // Note: In a real application, we might need to re-initialize the game state here if validation was ongoing.
+}
+
+function initializeSettingsListeners() {
+    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
+    if (!settingsPanel) return;
+
+    const closeButton = document.getElementById('settings-close-button') as HTMLElement;
+    if (closeButton) {
+        closeButton.addEventListener('click', toggleSettings);
+    }
+
+    // Listen for radio button changes within the settings panel
+    const radios = settingsPanel.querySelectorAll('input[name="validator_type"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if ((e.target as HTMLInputElement).checked) {
+                changeValidator((e.target as HTMLInputElement).value as 'dictionary' | 'wiktionary');
+            }
+        });
+    });
+}
+
 async function reset() {
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
 
     // --- Refactoring Step: Instantiate the desired validator and inject it into PromiseQueue ---
     // We will default to using DictionaryFetchAdapter for this run, but could easily switch here.
-    validator = new DictionaryFetchAdapter();
+    if (currentValidatorType === 'wiktionary') {
+        validator = new WiktionaryFetchAdapter();
+    } else {
+        validator = new DictionaryFetchAdapter();
+    }
     queue = new PromiseQueue(validator, time_scale);
 
     const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
@@ -197,6 +234,13 @@ async function reset() {
     const shuffle_btn = document.getElementById('shuffle') as HTMLElement;
     shuffle_btn.addEventListener('click', shuffler);
 
+    // Settings toggle listener
+    const settingsToggleBtn = document.getElementById('settings-toggle') as HTMLElement;
+    if (settingsToggleBtn) {
+        settingsToggleBtn.addEventListener('click', toggleSettings);
+    }
+
+
     const results = document.getElementById('result') as HTMLElement;
     results.classList.add('hidden');
     results.classList.remove('pending-result');
@@ -213,6 +257,9 @@ async function reset() {
         shuffle_btn.removeEventListener('click', shuffler);
         reset();
     }, { once: true } );
+
+    // Initialize settings listeners after all elements are available
+    initializeSettingsListeners();
 }
 
 window.addEventListener('load', function () {

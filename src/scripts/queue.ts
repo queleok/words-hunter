@@ -51,20 +51,24 @@ class DictionaryFetchAdapter implements IFetchAdapter {
     }
 
     async validate(word: string): Promise<FetchResult> {
-        const response = await fetch(this.url(word));
+        try {
+            const response = await fetch(this.url(word));
 
-        if (response.ok) {
-            const data = await response.json();
-            if (validateWord(data)) {
-                return "success";
+            if (response.ok) {
+                const data = await response.json();
+                if (validateWord(data)) {
+                    return "success";
+                } else {
+                    return "validation-failure";
+                }
+            } else if (response.status === 404) {
+                return "no-definition";
             } else {
-                return "validation-failure";
+                // Handle other HTTP errors
+                throw new Error(`${response.status}`);
             }
-        } else if (response.status === 404) {
-            return "no-definition";
-        } else {
-            // Handle other HTTP errors
-            console.error("Dictionary API fetch failed with response:", response);
+        } catch (e) {
+            console.error("Dictionary API fetch failed:", e);
             return "network-failure";
         }
     }
@@ -79,23 +83,26 @@ class WiktionaryFetchAdapter implements IFetchAdapter {
     }
 
     async validate(word: string): Promise<FetchResult> {
-        const response = await fetch(this.url(word));
-        if (!response.ok) {
-            console.error("Wiktionary API fetch failed with response:", response);
+        try {
+            const response = await fetch(this.url(word));
+            if (!response.ok) {
+                throw new Error(`${response.status}`); 
+            }
+
+            const data: WiktionaryResponse = await response.json();
+
+            // Check if the word exists in Wiktionary
+            if (isWordPresentInWiktionary(data)) {
+                return "success";
+            } else {
+                return "no-definition"; // Use no-definition for non-existence
+            }
+        } catch (e) {
+            console.error("Wiktionary API fecth failed: ", e);
             return "network-failure";
-        }
-
-        const data: WiktionaryResponse = await response.json();
-
-        // Check if the word exists in Wiktionary
-        if (isWordPresentInWiktionary(data)) {
-            return "success";
-        } else {
-            return "no-definition"; // Use no-definition for non-existence
         }
     }
 }
-
 
 class PromiseQueue {
     private begin: Node;
@@ -144,7 +151,6 @@ class PromiseQueue {
         this.depletion_cb = cb;
         if (this.length <= 0) this.depletion_cb();
     }
-
 }
 
 function validateWord(words: Array<WordData>): boolean {

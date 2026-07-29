@@ -111,47 +111,38 @@ body {
     align-items: center;
 }
 
-.score::before {
-    content: "";    
-    background-repeat: no-repeat;
-    background-size: contain;
-    width: 1em;
-    height: 1em;
-}
-
 .success {
     color: black;
     filter: invert(35%) sepia(39%) saturate(588%) hue-rotate(40deg) brightness(96%) contrast(86%);
 }
 
 .success::before {
-    background-image: url(icons/correct-symbol.svg);
+    content: "\2713";
 }
 
 .pending-score {
     color: black;
-    overflow: hidden;
     filter: invert(35%) sepia(64%) saturate(788%) hue-rotate(194deg) brightness(95%) contrast(94%);
+    font-size: 1.2em;
 }
 
 .pending-result {
     color: black;
     display: flex;
     flex-direction: row-reverse;
-    overflow: hidden;
 }
 
 [class*="pending-"]::before {
-    background-image: url(icons/spinner-of-dots.svg);
+    content: "\25CC";
     animation: spinning 2s linear infinite;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-bottom: 4px;
 }
 
 .pending-result::before {
-    height: 1.5em;
-    width: 1.5em;
-    content: "";    
-    background-repeat: no-repeat;
-    background-size: contain;
+  padding-bottom: 5px;
+  font-size: 1.5em;
 }
 
 .failure {
@@ -160,7 +151,7 @@ body {
 }
 
 .failure::before {
-    background-image: url(icons/remove-symbol.svg);
+    content: "\2717";
 }
 
 .network-failure {
@@ -170,7 +161,7 @@ body {
 }
 
 .network-failure::before {
-    background-image: url(icons/refresh-arrow.svg);
+    content: "\26A0";
 }
 
 input[type="text"] {
@@ -183,12 +174,15 @@ input[type="text"] {
     display: block;
 }
 
-#publish {
-    margin-left: -39px;
-    height: 36px;
-    width: 36px;
-    background-image: url(icons/up-chevron-button.svg);
-    flex: 0 0 auto;
+// Settings overlay styles
+#settings-panel {
+    position: absolute;
+    top: 52px;
+    width: 240px;
+    height: 240px;
+    padding: 10px;
+    left: calc(25% - 130px);
+    align-items: center;
 }
 
 #network-issues-disclaimer {
@@ -238,6 +232,12 @@ input[type="text"] {
 
     #letters {
         margin-bottom: 10px;
+    }
+
+    #settings-panel {
+        top: unset;
+        bottom: 10px;
+        left: calc(50% - 130px);
     }
 
     #network-issues-disclaimer {
