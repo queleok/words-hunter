@@ -33,7 +33,9 @@ function getFetchResultHandler(word: Element) {
         switch (fetch_result) {
             case "success":
                 word.setAttribute('class', 'score success');
-                word.setAttribute('href', `https://api.dictionaryapi.dev/api/v2/entries/en/${word.textContent}`);
+                // Note: The API used here is the Google Dictionary API, which might need to be updated if we switch entirely to Wiktionary for display purposes.
+                // For now, we keep the existing link structure but acknowledge it's tied to the old validation method.
+                word.setAttribute('href', `https://api.dictionaryapi.dev/api/v2/entries/en/${word.textContent}`); 
                 word.setAttribute('target', '_blank');
                 break;
             case "validation-failure":
@@ -159,6 +161,8 @@ function publishWord(word: string) {
 async function reset() {
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
     queue = new PromiseQueue(time_scale);
+    // Set the validation service to Wiktionary for this run
+    queue.setValidator('wiktionary');
 
     const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
     disclaimer.classList.add('hidden');
