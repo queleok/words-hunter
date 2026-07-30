@@ -6,6 +6,16 @@
     flex: 0 0 auto;
 }
 
+#apply-changes,
+#discard-changes,
+#resend {
+  filter: unset;
+}
+
+#apply-changes:hover,
+#apply-changes:focus,
+#discard-changes:hover,
+#discard-changes:focus,
 #resend:hover,
 #resend:focus {
     filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);

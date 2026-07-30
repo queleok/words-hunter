@@ -9,7 +9,7 @@ let freqmap = Array(26).fill(0);
 let queue: PromiseQueue;
 let validator: IFetchAdapter;
 let time_scale = 1.0;
-let currentValidatorType: 'dictionary' | 'wiktionary' = 'dictionary'; // New state variable
+let currentValidatorType: 'dictionary' | 'wiktionary' = 'wiktionary';
 
 declare global {
     interface Window { _puppeteerGetSpeedup: () => Promise<number>; }
@@ -161,41 +161,57 @@ function publishWord(word: string) {
 function toggleSettings() {
     const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
     if (settingsPanel) {
+        // When opening, initialize pending state to current state
+        const selector = document.getElementById('validator-selector') as HTMLSelectElement;
+        selector.value = currentValidatorType;
+
         settingsPanel.classList.toggle('hidden');
     }
 }
 
-function changeValidator(newType: 'dictionary' | 'wiktionary') {
-    currentValidatorType = newType;
-    console.log(`Validator switched to ${newType}`);
-    // Note: In a real application, we might need to re-initialize the game state here if validation was ongoing.
+function closeSettingsPanel() {
+    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
+    if (settingsPanel) {
+        settingsPanel.classList.add('hidden');
+    }
+}
+
+function applyChanges() {
+    const selector = document.getElementById('validator-selector') as HTMLSelectElement;
+    const selectedValue = selector?.value as 'dictionary' | 'wiktionary';
+
+    if (selectedValue && selectedValue !== currentValidatorType) {
+        currentValidatorType = selectedValue;
+
+        // Restart the game with new settings
+        const again = document.getElementById('again') as HTMLElement;
+        again.click()
+    }
+    closeSettingsPanel();
 }
 
 function initializeSettingsListeners() {
     const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
     if (!settingsPanel) return;
 
-    const closeButton = document.getElementById('settings-close-button') as HTMLElement;
-    if (closeButton) {
-        closeButton.addEventListener('click', toggleSettings);
+    // 1. Apply button listener
+    const applyButton = document.getElementById('apply-changes') as HTMLButtonElement;
+    if (applyButton) {
+        applyButton.addEventListener('click', applyChanges);
     }
 
-    // Listen for radio button changes within the settings panel
-    const radios = settingsPanel.querySelectorAll('input[name="validator_type"]');
-    radios.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            if ((e.target as HTMLInputElement).checked) {
-                changeValidator((e.target as HTMLInputElement).value as 'dictionary' | 'wiktionary');
-            }
-        });
-    });
+    // 2. Discard/Close button listener
+    const closeButton = document.getElementById('discard-changes') as HTMLElement;
+    if (closeButton) {
+        closeButton.addEventListener('click', closeSettingsPanel);
+    }
 }
 
 async function reset() {
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
 
     // --- Refactoring Step: Instantiate the desired validator and inject it into PromiseQueue ---
-    // We will default to using DictionaryFetchAdapter for this run, but could easily switch here.
+    // We use currentValidatorType which is now committed via applyChanges()
     if (currentValidatorType === 'wiktionary') {
         validator = new WiktionaryFetchAdapter();
     } else {
@@ -239,7 +255,6 @@ async function reset() {
     if (settingsToggleBtn) {
         settingsToggleBtn.addEventListener('click', toggleSettings);
     }
-
 
     const results = document.getElementById('result') as HTMLElement;
     results.classList.add('hidden');
