@@ -2,12 +2,14 @@
 
 import { generate, shuffle } from './generate-letters.js';
 import { formatTime, formatResult, escapeMissingLetters } from './format.js';
-import { PromiseQueue, FetchResult } from './queue.js';
+import { PromiseQueue, FetchResult, IFetchAdapter, DictionaryFetchAdapter, WiktionaryFetchAdapter } from './queue.js';
 import { LetterWidget, WordSynchronizer } from './ui.js';
 
 let freqmap = Array(26).fill(0);
-let queue = new PromiseQueue();
+let queue: PromiseQueue;
+let validator: IFetchAdapter;
 let time_scale = 1.0;
+let currentValidatorType: 'dictionary' | 'wiktionary' = 'wiktionary';
 
 declare global {
     interface Window { _puppeteerGetSpeedup: () => Promise<number>; }
@@ -33,7 +35,7 @@ function getFetchResultHandler(word: Element) {
         switch (fetch_result) {
             case "success":
                 word.setAttribute('class', 'score success');
-                word.setAttribute('href', `https://api.dictionaryapi.dev/api/v2/entries/en/${word.textContent}`);
+                word.setAttribute('href', validator.url(word.textContent));
                 word.setAttribute('target', '_blank');
                 break;
             case "validation-failure":
@@ -89,7 +91,7 @@ function reportResults(results: HTMLElement) {
 
 function stopTimer(tmr: ReturnType<typeof setInterval>
         , results: HTMLElement
-        , synchronizer: WordSynchronizer) 
+        , synchronizer: WordSynchronizer)
 {
     // stop timer
     clearInterval(tmr);
@@ -156,9 +158,66 @@ function publishWord(word: string) {
     }
 }
 
+function toggleSettings() {
+    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
+    if (settingsPanel) {
+        // When opening, initialize pending state to current state
+        const selector = document.getElementById('validator-selector') as HTMLSelectElement;
+        selector.value = currentValidatorType;
+
+        settingsPanel.classList.toggle('hidden');
+    }
+}
+
+function closeSettingsPanel() {
+    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
+    if (settingsPanel) {
+        settingsPanel.classList.add('hidden');
+    }
+}
+
+function applyChanges() {
+    const selector = document.getElementById('validator-selector') as HTMLSelectElement;
+    const selectedValue = selector?.value as 'dictionary' | 'wiktionary';
+
+    if (selectedValue && selectedValue !== currentValidatorType) {
+        currentValidatorType = selectedValue;
+
+        // Restart the game with new settings
+        const again = document.getElementById('again') as HTMLElement;
+        again.click()
+    }
+    closeSettingsPanel();
+}
+
+function initializeSettingsListeners() {
+    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
+    if (!settingsPanel) return;
+
+    // 1. Apply button listener
+    const applyButton = document.getElementById('apply-changes') as HTMLButtonElement;
+    if (applyButton) {
+        applyButton.addEventListener('click', applyChanges);
+    }
+
+    // 2. Discard/Close button listener
+    const closeButton = document.getElementById('discard-changes') as HTMLElement;
+    if (closeButton) {
+        closeButton.addEventListener('click', closeSettingsPanel);
+    }
+}
+
 async function reset() {
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
-    queue = new PromiseQueue(time_scale);
+
+    // --- Refactoring Step: Instantiate the desired validator and inject it into PromiseQueue ---
+    // We use currentValidatorType which is now committed via applyChanges()
+    if (currentValidatorType === 'wiktionary') {
+        validator = new WiktionaryFetchAdapter();
+    } else {
+        validator = new DictionaryFetchAdapter();
+    }
+    queue = new PromiseQueue(validator, time_scale);
 
     const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
     disclaimer.classList.add('hidden');
@@ -191,6 +250,12 @@ async function reset() {
     const shuffle_btn = document.getElementById('shuffle') as HTMLElement;
     shuffle_btn.addEventListener('click', shuffler);
 
+    // Settings toggle listener
+    const settingsToggleBtn = document.getElementById('settings-toggle') as HTMLElement;
+    if (settingsToggleBtn) {
+        settingsToggleBtn.addEventListener('click', toggleSettings);
+    }
+
     const results = document.getElementById('result') as HTMLElement;
     results.classList.add('hidden');
     results.classList.remove('pending-result');
@@ -207,6 +272,9 @@ async function reset() {
         shuffle_btn.removeEventListener('click', shuffler);
         reset();
     }, { once: true } );
+
+    // Initialize settings listeners after all elements are available
+    initializeSettingsListeners();
 }
 
 window.addEventListener('load', function () {
