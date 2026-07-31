@@ -20,15 +20,17 @@ interface WordData {
     meanings: Array<Meaning>
 }
 
-// --- Wiktionary API Types ---
-interface WiktionaryPageInfo {
-    title: string;
-    pageId?: string;
+// --- Wiktionary API Types (Updated for Parse action) ---
+interface WiktionaryCategory {
+    sortkey: string;
+    category: string;
 }
 
 interface WiktionaryResponse {
-    query: {
-        pages: Array<WiktionaryPageInfo>;
+    parse: {
+        title: string;
+        pageid?: number;
+        categories: Array<WiktionaryCategory>;
     };
 }
 
@@ -79,7 +81,8 @@ class DictionaryFetchAdapter implements IFetchAdapter {
  */
 class WiktionaryFetchAdapter implements IFetchAdapter {
     url(word: string): string {
-        return `https://en.wiktionary.org/w/api.php?action=query&format=json&formatversion=2&titles=${encodeURIComponent(word)}&origin=*`;
+        // Use action=parse to get categories instead of query results
+        return `https://en.wiktionary.org/w/api.php?action=parse&format=json&formatversion=2&page=${encodeURIComponent(word)}&prop=categories&origin=*`;
     }
 
     async validate(word: string): Promise<FetchResult> {
@@ -91,17 +94,32 @@ class WiktionaryFetchAdapter implements IFetchAdapter {
 
             const data: WiktionaryResponse = await response.json();
 
-            // Check if the word exists in Wiktionary
-            if (isWordPresentInWiktionary(data)) {
+            // Check if the word is categorized as a target type (e.g., English Noun, Verb, etc.)
+            if (checkIfCategorizedAsTargetType(data, "English", ["nouns", "verbs", "adjectives", "adverbs", "pronouns", "prepositions", "conjuctions"])) {
                 return "success";
             } else {
-                return "no-definition"; // Use no-definition for non-existence
+                return "no-definition"; // Use no-definition for non-existence in target language/type
             }
         } catch (e) {
-            console.error("Wiktionary API fecth failed: ", e);
+            console.error("Wiktionary API fetch failed: ", e);
             return "network-failure";
         }
     }
+}
+
+/**
+ * Checks if the Wiktionary response contains categories matching a specific language and part of speech.
+ * @param response The parsed JSON response from action=parse.
+ * @param targetLanguage The language code (e.g., 'English').
+ * @param partsOfSpeech An array of desired parts of speech (e.g., ['nouns', 'verbs']).
+ * @returns True if a matching category is found, false otherwise.
+ */
+function checkIfCategorizedAsTargetType(response: WiktionaryResponse, targetLanguage: string, partsOfSpeech: Array<string>): boolean {
+    const categories = response.parse?.categories || [];
+
+    return categories.some((cat) =>
+        partsOfSpeech.some((pos) => cat.category.includes(`${targetLanguage}_${pos}`))
+    );
 }
 
 class PromiseQueue {
@@ -161,13 +179,6 @@ function validateWord(words: Array<WordData>): boolean {
             || meaning.definitions.every( def =>
                 def.definition.startsWith("short for "))));
     return is_there_non_abbreviation;
-}
-
-function isWordPresentInWiktionary(response: WiktionaryResponse): boolean {
-    const query = response?.query;
-    if (!query) return false;
-
-    return query.pages.length > 0 && query.pages.some((p) => p.hasOwnProperty('pageid'));
 }
 
 export {PromiseQueue, FetchResult, IFetchAdapter, DictionaryFetchAdapter, WiktionaryFetchAdapter};
