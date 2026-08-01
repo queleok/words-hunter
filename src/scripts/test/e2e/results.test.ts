@@ -12,42 +12,68 @@ async function getTextContent(eh: ElementHandle): Promise<string> {
     return (await eh.evaluate(domElem => domElem.textContent))!;
 };
 
+/**
+ * Simulates a successful Wiktionary response (word is categorized).
+ * @param word The word being queried.
+ */
 const getSuccessResponseMock = (word: string | undefined) => {
     return {
         status: 200,
         headers: { "Access-Control-Allow-Origin": "*" },
-        contentType: 'application/json',
-        body: `[{ "word": "${word}", "meanings": [ { "partOfSpeech": "stub", "definitions": [ { "definition": "stub" } ]}]}]`
+        // We simulate a successful parse result containing categories
+        body: JSON.stringify({
+            parse: {
+                title: word || 'mock_word',
+                categories: [
+                    { sortkey: 'example', category: 'English_nouns' } // Simulating a target POS match
+                ]
+            }
+        })
     };
 };
 
+/**
+ * Simulates a "no definition" response (word exists but is not in a target language/POS, or no categories found).
+ */
 const getFailureResponseMock = (word: string | undefined) => {
     return {
-        status: 404,
+        status: 200, // Status is OK, but the content indicates failure to match criteria
         headers: { "Access-Control-Allow-Origin": "*" },
-        contentType: 'application/json',
-        body: `[ "Word '${word}' not found" ]`
+        // We simulate a parse result with no relevant categories
+        body: JSON.stringify({
+            parse: {
+                title: word || 'mock_word',
+                categories: [] 
+            }
+        })
     };
-}
+};
 
+/**
+ * Simulates a network/server error (e.g., rate limiting, server down).
+ */
 const getRecoverableFailureResponseMock = (word: string | undefined) => {
     return {
-        status: 400,
+        status: 400, // HTTP status code indicating temporary failure
         headers: { "Access-Control-Allow-Origin": "*" },
-        contentType: 'application/json',
-        body: `[ "Something went wrong" ]`
+        body: JSON.stringify({ error: 'Temporary server issue' })
     };
 };
 
 let getResponseMock = getSuccessResponseMock;
 
 const handler = (request: HTTPRequest) => {
-    if (request.url().startsWith('https://api.dictionaryapi.dev/api/v2/entries/en/')) {
-        const word = request.url().split('/').pop();
+    const url = request.url();
+    if (url.includes('wiktionary.org')) {
+        // For now we don't really care about the actual word to be parsed out from the URL
+        const placeholderWord = "mocked_word"; 
+
         setTimeout(() => {
-            request.respond(getResponseMock(word));
+            request.respond(getResponseMock(placeholderWord));
         }, response_timeout);
-    } else request.continue();
+    } else {
+        request.continue();
+    }
 };
 
 const send_first_n_letters = async (n: number): Promise<string> => {
@@ -132,14 +158,14 @@ test('Confirm 3-letter and 4-letter words yield the score of 3', async () => {
 }, timeout);
 
 test('Confirm 3- and 4-letter failed words and 5- and 6-letter recoverably failed word yield the score of 0; confirm consequent successful resolution of recoverably failed words updates the score correctly', async () => {
-    getResponseMock = getFailureResponseMock;
+    getResponseMock = getFailureResponseMock; // Use failure mock for non-existent words
 
     await send_first_n_letters(3);
     await send_first_n_letters(4);
 
-    await page.waitForSelector('.failure ~ .failure');
+    await page.waitForSelector('.failure ~ .failure'); 
 
-    getResponseMock = getRecoverableFailureResponseMock;
+    getResponseMock = getRecoverableFailureResponseMock; // Use recoverable failure mock for network issues
 
     await send_first_n_letters(5);
     await send_first_n_letters(6);
@@ -151,7 +177,7 @@ test('Confirm 3- and 4-letter failed words and 5- and 6-letter recoverably faile
     const disclaimer_eh = await page.waitForSelector('#network-issues-disclaimer', { visible: true });
     expect(disclaimer_eh).toBeDefined();
 
-    getResponseMock = getSuccessResponseMock;
+    getResponseMock = getSuccessResponseMock; // Switch back to success mock for resend
 
     const resend_btn_eh = await page.waitForSelector('#resend', { visible: true });
     expect(resend_btn_eh).toBeDefined();
@@ -185,4 +211,3 @@ test('Confirm pending word yields pending result, and the result is updated afte
     const result_eh_resolved = await page.waitForSelector('#result:not(.pending-result)');
     await assert_score(result_eh_resolved, 3);
 }, timeout);
-
