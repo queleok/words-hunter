@@ -103,6 +103,7 @@ body {
     align-items: center;
     background-color: beige;
     font-size: 2em;
+    aspect-ratio: 1 / 1;
 }
 
 .score {
@@ -258,4 +259,3 @@ input[type="text"] {
 .hidden {
     display: none;
 }
-
