@@ -14,15 +14,24 @@ const getResponseMock = (word: string | undefined) => {
     return {
         status: 200,
         headers: { "Access-Control-Allow-Origin": "*" },
-        contentType: 'application/json',
-        body: `[{ "word": "${word}", "meanings": [ { "partOfSpeech": "stub", "definitions": [ { "definition": "stub" } ]}]}]`
+        // We simulate a successful parse result containing categories
+        body: JSON.stringify({
+            parse: {
+                title: word || 'mock_word',
+                categories: [
+                    { sortkey: 'example', category: 'English_nouns' } // Simulating a target POS match
+                ]
+            }
+        })
     };
 };
 
 const handler = (request: HTTPRequest) => {
-    if (request.url().startsWith('https://api.dictionaryapi.dev/api/v2/entries/en/')) {
-        const word = request.url().split('/').pop();
-        request.respond(getResponseMock(word));
+    const url = request.url();
+    if (url.includes('wiktionary.org')) {
+        // For now we don't really care about the actual word to be parsed out from the URL
+        const placeholderWord = "mocked_word"; 
+        request.respond(getResponseMock(placeholderWord));
     } else request.continue();
 };
 

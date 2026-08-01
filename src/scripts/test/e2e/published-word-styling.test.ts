@@ -10,39 +10,62 @@ async function getTextContent(eh: ElementHandle): Promise<string> {
     return (await eh.evaluate(domElem => domElem.textContent))!;
 };
 
+/**
+ * Simulates a successful Wiktionary response (word is categorized).
+ * @param word The word being queried.
+ */
 const getSuccessResponseMock = (word: string | undefined) => {
     return {
         status: 200,
         headers: { "Access-Control-Allow-Origin": "*" },
-        contentType: 'application/json',
-        body: `[{ "word": "${word}", "meanings": [ { "partOfSpeech": "stub", "definitions": [ { "definition": "stub" } ]}]}]`
+        // We simulate a successful parse result containing categories
+        body: JSON.stringify({
+            parse: {
+                title: word || 'mock_word',
+                categories: [
+                    { sortkey: 'example', category: 'English_nouns' } // Simulating a target POS match
+                ]
+            }
+        })
     };
 };
 
+/**
+ * Simulates a "no definition" response (word exists but is not in a target language/POS, or no categories found).
+ */
 const getFailureResponseMock = (word: string | undefined) => {
     return {
-        status: 404,
+        status: 200, // Status is OK, but the content indicates failure to match criteria
         headers: { "Access-Control-Allow-Origin": "*" },
-        contentType: 'application/json',
-        body: `[ "Word '${word}' not found" ]`
+        // We simulate a parse result with no relevant categories
+        body: JSON.stringify({
+            parse: {
+                title: word || 'mock_word',
+                categories: [] 
+            }
+        })
     };
-}
+};
 
+/**
+ * Simulates a network/server error (e.g., rate limiting, server down).
+ */
 const getRecoverableFailureResponseMock = (word: string | undefined) => {
     return {
-        status: 400,
+        status: 400, // HTTP status code indicating temporary failure
         headers: { "Access-Control-Allow-Origin": "*" },
-        contentType: 'application/json',
-        body: `[ "Something went wrong" ]`
+        body: JSON.stringify({ error: 'Temporary server issue' })
     };
 };
 
 let getResponseMock = getSuccessResponseMock;
 
 const handler = (request: HTTPRequest) => {
-    if (request.url().startsWith('https://api.dictionaryapi.dev/api/v2/entries/en/')) {
-        const word = request.url().split('/').pop();
-        request.respond(getResponseMock(word));
+    const url = request.url();
+    if (url.includes('wiktionary.org')) {
+        // For now we don't really care about the actual word to be parsed out from the URL
+        const placeholderWord = "mocked_word"; 
+        request.respond(getResponseMock(placeholderWord));
     } else request.continue();
 };
 
