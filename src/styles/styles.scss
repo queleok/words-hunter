@@ -103,6 +103,7 @@ body {
     align-items: center;
     background-color: beige;
     font-size: 2em;
+    aspect-ratio: 1 / 1;
 }
 
 .score {
@@ -236,13 +237,13 @@ input[type="text"] {
 
     #settings-panel {
         top: unset;
-        bottom: 10px;
+        bottom: 0px;
         left: calc(50% - 130px);
     }
 
     #network-issues-disclaimer {
         top: unset;
-        bottom: 10px;
+        bottom: 0px;
         left: calc(50% - 130px);
     }
 }
@@ -258,4 +259,3 @@ input[type="text"] {
 .hidden {
     display: none;
 }
-
