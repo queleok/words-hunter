@@ -95,7 +95,7 @@ class WiktionaryFetchAdapter implements IFetchAdapter {
             const data: WiktionaryResponse = await response.json();
 
             // Check if the word is categorized as a target type (e.g., English Noun, Verb, etc.)
-            if (checkIfCategorizedAsTargetType(data, "English", ["nouns", "verbs", "adjectives", "adverbs", "pronouns", "prepositions", "conjuctions"])) {
+            if (checkIfCategorizedAsTargetType(data, "English", ["nouns", "noun_forms", "verbs", "verb_forms", "adjectives", "adjective_forms", "adverbs", "adverb_forms", "pronouns", "pronoun_forms", "prepositions", "conjuctions"])) {
                 return "success";
             } else {
                 return "no-definition"; // Use no-definition for non-existence in target language/type
