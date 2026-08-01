@@ -124,7 +124,7 @@ body {
 .pending-score {
     color: black;
     filter: invert(35%) sepia(64%) saturate(788%) hue-rotate(194deg) brightness(95%) contrast(94%);
-    font-size: 1.2em;
+    padding-right: 3px;
 }
 
 .pending-result {
@@ -134,16 +134,21 @@ body {
 }
 
 [class*="pending-"]::before {
-    content: "\25CC";
-    animation: spinning 2s linear infinite;
-    padding-left: 5px;
-    padding-right: 5px;
-    padding-bottom: 4px;
+    content: "⠋";
+    animation: cycleSymbols 0.8s ease-in-out infinite;
 }
 
-.pending-result::before {
-  padding-bottom: 5px;
-  font-size: 1.5em;
+@keyframes cycleSymbols {
+  0%   { content: "⠋"; }
+  10%  { content: "⠙"; }
+  20%  { content: "⠹"; }
+  30%  { content: "⠸"; }
+  40%  { content: "⠼"; }
+  50%  { content: "⠴"; }
+  60%  { content: "⠦"; }
+  70%  { content: "⠧"; }
+  80%  { content: "⠇"; }
+  90%  { content: "⠏"; }
 }
 
 .failure {
