@@ -1,6 +1,8 @@
 type LanguageCode = 'en' | 'sv';
 
 interface LanguageConfig {
+    code: LanguageCode;
+    name: string;
     // The characters in the language's alphabet
     alphabet: string;
     // Frequency values corresponding to alphabet (normalized later)
@@ -12,6 +14,8 @@ interface LanguageConfig {
 }
 
 const englishConfig: LanguageConfig = {
+    code: 'en',
+    name: 'English',
     alphabet: 'abcdefghijklmnopqrstuvwxyz',
     frequencies: [ 8.12, 1.49, 2.71, 4.32, 12.02, 2.3, 2.03, 5.92, 7.31, 0.1, 0.69, 3.98, 2.61, 6.95, 7.68, 1.82, 0.11, 6.02, 6.28, 9.1, 2.88, 1.11, 2.09, 0.17, 2.11, 0.07 ],
     limits: [ 3, 2, 2, 2, 3, 2, 2, 2, 3, 1, 2, 3, 2, 3, 3, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2 ],
@@ -19,6 +23,8 @@ const englishConfig: LanguageConfig = {
 };
 
 const swedishConfig: LanguageConfig = {
+    code: 'sv',
+    name: 'Swedish',
     alphabet: 'abcdefghijklmnopqrstuvwxyzåäö',
     frequencies: [ 9.0, 1.3, 1.2, 4.8, 10.1, 1.9, 3.0, 1.9, 6.2, 0.6, 3.4, 8.6, 4.4, 1.8, 0.01, 8.7, 6.9, 8.2, 1.8, 2.5, 0.1, 0.1, 0.5, 0.01, 1.3, 1.7, 1.5 ],
     limits: [ 4, 3, 3, 3, 4, 3, 3, 2, 4, 2, 3, 4, 3, 4, 3, 4, 1, 4, 4, 4, 3, 2, 2, 2, 2, 2, 2, 2, 2 ],
@@ -138,13 +144,14 @@ function shuffle<Type>(array: Array<Type>) {
 }
 
 /**
- * Generates letters for a specific language and returns the result object.
+ * Generates letters for a specific language and returns the result object, including configuration.
  * @param langCode The language identifier ('en', 'sv').
- * @returns An object containing alpha_count (frequency map) and generated letters array.
+ * @returns An object containing alpha_count (frequency map), generated letters array, and LanguageConfig.
  */
-function generate(langCode: LanguageCode = 'en'): { alpha_count: number[], letters: string[] } {
+function generate(langCode: LanguageCode = 'en'): { alpha_count: number[], letters: string[], config: LanguageConfig } {
     const config = languageConfigs[langCode];
-    return generateImpl(config);
+    const results = generateImpl(config);
+    return { ...results, config };
 }
 
-export { LanguageCode, limits, generate, getLetterOrdinalNumber, shuffle };
+export { LanguageConfig, LanguageCode, limits, generate, getLetterOrdinalNumber, shuffle };
