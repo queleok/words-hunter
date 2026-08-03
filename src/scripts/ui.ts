@@ -109,7 +109,7 @@ class WordSynchronizer {
 
     private highlightLetter = (letter: string) => {
         this.word.splice(this.cursor++, 0, { letter: letter });
-        if (letter.match(/^[^a-z0-9]+$/i) !== null) return;
+        if (letter.match(/^[^a-z]+$/i) !== null) return;
 
         const widgets = this.letter_widgets[getLetterOrdinalNumber(letter)];
         if (widgets) {
