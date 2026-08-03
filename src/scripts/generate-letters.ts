@@ -16,6 +16,57 @@ const frequencies_vowels = [ 0.280220, 0.260504, 0.174855, 0.162250, 0.086296, 0
 //               a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z
 const limits = [ 3, 2, 2, 2, 3, 2, 2, 2, 3, 1, 2, 3, 2, 3, 3, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2 ];
 
+/* Swedish, TBD
+ *
+ * Vowels by frequency:
+ * e    0.281975
+ * a    0.234237
+ * i    0.186279
+ * o    0.113055
+ * u    0.058490
+ * ä    0.052133
+ * ö    0.037372
+ * å    0.021229
+ * y    0.015231
+ * source: see docs/parole-se100k-stats.ipynb
+ *
+ * Alphabet by frequency:
+ * e    10.1
+ * a    9.0
+ * r    8.7
+ * n    8.6
+ * t    8.2
+ * s    6.9
+ * i    6.2
+ * l    5.0
+ * d    4.8
+ * o    4.4
+ * m    3.4
+ * k    3.4
+ * g    3.0
+ * v    2.5
+ * h    1.9
+ * f    1.9
+ * p    1.8
+ * u    1.8
+ * ä    1.7
+ * ö    1.5
+ * å    1.3
+ * b    1.3
+ * c    1.2
+ * j    0.6
+ * y    0.5
+ * x    0.1
+ * w    0.1
+ * z    0.01 // NOTE: there was 0 in the source
+ * q    0.01 // NOTE: there was 0 in the source
+ * source: https://ncm.gu.se/media/namnaren/kryptoskola/24_Krypto2_Sprak2.pdf
+ *
+ * Limits
+ * a b c d e f g h i j k l m n o p q r s t u v w x y z å ä ö
+ * 4 3 3 3 4 3 3 2 4 2 3 4 3 4 3 4 1 4 4 4 3 2 2 2 2 2 2 2 2 
+*/
+
 function isVowel(chr: string) {
     return vowels_by_frequency.indexOf(chr) !== -1;
 }
