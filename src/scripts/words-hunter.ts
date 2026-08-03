@@ -10,6 +10,7 @@ let queue: PromiseQueue;
 let validator: IFetchAdapter;
 let time_scale = 1.0;
 let currentValidatorType: 'dictionary' | 'wiktionary' = 'wiktionary';
+let currentLanguage: 'en' | 'sv' = 'en';
 
 declare global {
     interface Window { _puppeteerGetSpeedup: () => Promise<number>; }
@@ -162,8 +163,15 @@ function toggleSettings() {
     const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
     if (settingsPanel) {
         // When opening, initialize pending state to current state
-        const selector = document.getElementById('validator-selector') as HTMLSelectElement;
-        selector.value = currentValidatorType;
+        const validatorSelector = document.getElementById('validator-selector') as HTMLSelectElement;
+        validatorSelector.value = currentValidatorType;
+
+        // NEW: Initialize language selector
+        const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
+        if (languageSelector) {
+            languageSelector.value = currentLanguage;
+        }
+
 
         settingsPanel.classList.toggle('hidden');
     }
@@ -177,17 +185,36 @@ function closeSettingsPanel() {
 }
 
 function applyChanges() {
-    const selector = document.getElementById('validator-selector') as HTMLSelectElement;
-    const selectedValue = selector?.value as 'dictionary' | 'wiktionary';
+    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
+    if (settingsPanel) {
+        closeSettingsPanel();
 
-    if (selectedValue && selectedValue !== currentValidatorType) {
-        currentValidatorType = selectedValue;
+        // When opening, initialize pending state to current state
+        const validatorSelector = document.getElementById('validator-selector') as HTMLSelectElement;
+        const selectedValidatorValue = validatorSelector?.value as 'dictionary' | 'wiktionary';
 
-        // Restart the game with new settings
-        const again = document.getElementById('again') as HTMLElement;
-        again.click()
+        // NEW: Get language selector value
+        const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
+        const selectedLanguage = languageSelector?.value as 'en' | 'sv';
+
+        let changed = false;
+        if (selectedValidatorValue && selectedValidatorValue !== currentValidatorType) {
+            currentValidatorType = selectedValidatorValue;
+            changed = true;
+        }
+
+        // NEW: Check and update language state
+        if (selectedLanguage && selectedLanguage !== currentLanguage) {
+             currentLanguage = selectedLanguage;
+             changed = true;
+        }
+
+        if (changed) {
+            // Since API calls depend on this setting, we must restart the game too.
+            const again = document.getElementById('again') as HTMLElement;
+            again.click()
+        }
     }
-    closeSettingsPanel();
 }
 
 function initializeSettingsListeners() {
@@ -201,7 +228,7 @@ function initializeSettingsListeners() {
     }
 
     // 2. Discard/Close button listener
-    const closeButton = document.getElementById('discard-changes') as HTMLElement;
+    const closeButton = document.getElementById('discard-changes') as HTMLButtonElement;
     if (closeButton) {
         closeButton.addEventListener('click', closeSettingsPanel);
     }
