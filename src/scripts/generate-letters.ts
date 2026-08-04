@@ -17,8 +17,9 @@ const englishConfig: LanguageConfig = {
     code: 'en',
     name: 'English',
     alphabet: 'abcdefghijklmnopqrstuvwxyz',
+    //              a     b     c     d      e     f    g     h     i     j    k     l     m     n     o     p     q     r     s     t    u     v     w     x     y     z
     frequencies: [ 8.12, 1.49, 2.71, 4.32, 12.02, 2.3, 2.03, 5.92, 7.31, 0.1, 0.69, 3.98, 2.61, 6.95, 7.68, 1.82, 0.11, 6.02, 6.28, 9.1, 2.88, 1.11, 2.09, 0.17, 2.11, 0.07 ],
-    limits: [ 3, 2, 2, 2, 3, 2, 2, 2, 3, 1, 2, 3, 2, 3, 3, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2 ],
+    limits:      [    3,    2,    2,    2,     3,   2,    2,    2,    3,   1,    2,    3,    2,    3,    3,    2,    2,    2,    3,   3,    2,    2,    2,    2,    2,    2 ],
     vowels: 'ieaouy'
 };
 
@@ -26,8 +27,9 @@ const swedishConfig: LanguageConfig = {
     code: 'sv',
     name: 'Swedish',
     alphabet: 'abcdefghijklmnopqrstuvwxyzåäö',
-    frequencies: [ 9.0, 1.3, 1.2, 4.8, 10.1, 1.9, 3.0, 1.9, 6.2, 0.6, 3.4, 8.6, 4.4, 1.8, 0.01, 8.7, 6.9, 8.2, 1.8, 2.5, 0.1, 0.1, 0.5, 0.01, 1.3, 1.7, 1.5 ],
-    limits: [ 4, 3, 3, 3, 4, 3, 3, 2, 4, 2, 3, 4, 3, 4, 3, 4, 1, 4, 4, 4, 3, 2, 2, 2, 2, 2, 2, 2, 2 ],
+    //              a    b    c    d     e    f    g    h    i    j    k    l    m    n    o    p    q     r    s    t    u    v    w    x    y    z     å    ä    ö
+    frequencies: [ 9.0, 1.3, 1.2, 4.8, 10.1, 1.9, 3.0, 1.9, 6.2, 0.6, 3.4, 5.0, 3.4, 8.6, 4.4, 1.8, 0.01, 8.7, 6.9, 8.2, 1.8, 2.5, 0.1, 0.1, 0.5, 0.01, 1.3, 1.7, 1.5 ],
+    limits:      [   3,   2,   2,   2,   3,    2,   3,   2,   3,   2,   2,   3,   2,   4,   3,   3,   1,    3,   3,   3,   2,   2,   2,   1,   2,    2,   2,   2,   2 ],
     vowels: 'eaiouäöåy'
 };
 
@@ -41,7 +43,7 @@ function getLetterOrdinalNumber(letter: string, lang: LanguageCode = 'en') {
 
     const ret = config.alphabet.indexOf(letter.toLowerCase());
     if (ret < 0) {
-        throw new Error(`Only a-z & å-ö symbols are supported by the function, but ${letter} was passed`);
+        throw new Error(`Invalid symbol "${letter}" (lowercase: "${letter.toLowerCase()}") for ${config.name} language with alphabet "${config.alphabet}"`);
     }
 
     return ret;
