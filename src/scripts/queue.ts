@@ -80,6 +80,12 @@ class DictionaryFetchAdapter implements IFetchAdapter {
  * WiktionaryFetchAdapter implements IFetchAdapter using the Wiktionary API.
  */
 class WiktionaryFetchAdapter implements IFetchAdapter {
+    private language: string = "English";
+
+    constructor(language: string) {
+        this.language = language;
+    }
+
     url(word: string): string {
         // Use action=parse to get categories instead of query results
         return `https://en.wiktionary.org/w/api.php?action=parse&format=json&formatversion=2&page=${encodeURIComponent(word)}&prop=categories&origin=*`;
@@ -95,7 +101,7 @@ class WiktionaryFetchAdapter implements IFetchAdapter {
             const data: WiktionaryResponse = await response.json();
 
             // Check if the word is categorized as a target type (e.g., English Noun, Verb, etc.)
-            if (checkIfCategorizedAsTargetType(data, "English", ["nouns", "noun_forms", "verbs", "verb_forms", "adjectives", "adjective_forms", "adverbs", "adverb_forms", "pronouns", "pronoun_forms", "prepositions", "conjuctions"])) {
+            if (checkIfCategorizedAsTargetType(data, this.language, ["nouns", "noun_forms", "verbs", "verb_forms", "adjectives", "adjective_forms", "adverbs", "adverb_forms", "pronouns", "pronoun_forms", "prepositions", "conjuctions"])) {
                 return "success";
             } else {
                 return "no-definition"; // Use no-definition for non-existence in target language/type

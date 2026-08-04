@@ -1,5 +1,5 @@
 import { escapeRegExp } from './format.js';
-import { getLetterOrdinalNumber } from './generate-letters.js';
+import { LanguageConfig, getLetterOrdinalNumber } from './generate-letters.js';
 
 type WidgetPlaceholder = {
     widget?: LetterWidget;
@@ -14,18 +14,23 @@ class WordSynchronizer {
     private publish?: HTMLElement;
     private cursor: number;
     private overdraft?: Array<number>;
+    private config: LanguageConfig;
 
-    constructor(word: HTMLElement, publisher: (word: string) => void) {
+    constructor(publisher: (word: string) => void, config: LanguageConfig, letters: string[]) {
         this.cursor = 0;
+        this.config = config;
 
-        this.letter_widgets = Array<Array<LetterWidget>>(26);
+        this.letter_widgets = Array<Array<LetterWidget>>(this.config.alphabet.length);
+
+        const wordElement = document.getElementById('word')!;
 
         this.word = new Array<WidgetPlaceholder>();
         this.publisher = publisher;
 
+        // Initialize input element and event listeners
         this.input = document.createElement('input');
 
-        for (const elem of word.children) {
+        for (const elem of wordElement.children) {
             if (elem.tagName.toLowerCase() === "input") this.input = elem as HTMLInputElement;
             else if (elem.tagName.toLowerCase() === "div" && elem.classList.contains("button")) {
                 this.publish = elem as HTMLElement;
@@ -33,10 +38,14 @@ class WordSynchronizer {
             }
         }
 
+        // Create letter widgets based on the generated letters array
+        this.setLetters(letters);
+
         this.input.parentElement!.setAttribute("class", "hbox-nowrap");
         this.input.addEventListener('keypress', this.handleWord);
         this.input.addEventListener('beforeinput', this.handleBeforeInput);
         this.input.addEventListener('input', this.handleInput);
+        this.input.pattern = `[${this.config.alphabet}${this.config.alphabet.toUpperCase()}]{3,16}`;
 
         window.addEventListener('keypress', this.handleWord);
     }
@@ -62,14 +71,19 @@ class WordSynchronizer {
         window.removeEventListener('keypress', this.handleWord);
     }
 
-    setLetters = (letts: Array<LetterWidget>) => {
-        this.letter_widgets = Array<Array<LetterWidget>>(26);
-        for (const lw of letts) {
-            const ix = getLetterOrdinalNumber(lw.getLetter());
+    private setLetters = (letters: string[]) => {
+        const letters_div = document.getElementById('letters') as HTMLElement;
+        letters_div.textContent = "";
+
+        this.letter_widgets = Array<Array<LetterWidget>>(this.config.alphabet.length);
+        for (const letter of letters) {
+            const widget = new LetterWidget(letter, letters_div, this);
+            const ix = getLetterOrdinalNumber(letter, this.config.code);
             if (!this.letter_widgets[ix]) this.letter_widgets[ix] = new Array<LetterWidget>();
-            this.letter_widgets[ix].push(lw);
+            this.letter_widgets[ix].push(widget);
         }
     }
+
 
     pop = (lw: LetterWidget) => {
         const index = this.word.findIndex(ph => ph.widget === lw);
@@ -94,7 +108,7 @@ class WordSynchronizer {
     private evaluateRehighlighting = (lw: LetterWidget) => {
         if (!this.overdraft) return;
 
-        let credit = this.overdraft[getLetterOrdinalNumber(lw.getLetter())];
+        let credit = this.overdraft[getLetterOrdinalNumber(lw.getLetter(), this.config.code)];
         if (credit > 0) {
             for (const ph of this.word) {
                 if (ph.letter == lw.getLetter() && !ph.widget) {
@@ -109,9 +123,9 @@ class WordSynchronizer {
 
     private highlightLetter = (letter: string) => {
         this.word.splice(this.cursor++, 0, { letter: letter });
-        if (letter.match(/^[^a-z0-9]+$/i) !== null) return;
+        if (!this.config.alphabet.includes(letter.toLowerCase())) return;
 
-        const widgets = this.letter_widgets[getLetterOrdinalNumber(letter)];
+        const widgets = this.letter_widgets[getLetterOrdinalNumber(letter, this.config.code)];
         if (widgets) {
             for (const letter_widget of widgets) {
                 if (letter == letter_widget.getLetter() && letter_widget.highlight()) {
@@ -121,8 +135,8 @@ class WordSynchronizer {
             }
         }
 
-        if (!this.overdraft) this.overdraft = Array(26).fill(0);
-        this.overdraft[getLetterOrdinalNumber(letter)]++;
+        if (!this.overdraft) this.overdraft = Array(this.config.alphabet.length).fill(0); // Use dynamic length here
+        this.overdraft[getLetterOrdinalNumber(letter, this.config.code)]++;
     }
 
     private dehighlightLetters = () => {

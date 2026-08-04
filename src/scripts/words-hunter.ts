@@ -1,6 +1,6 @@
 'use strict';
 
-import { generate, shuffle } from './generate-letters.js';
+import { LanguageCode, generate, shuffle } from './generate-letters.js';
 import { formatTime, formatResult, escapeMissingLetters } from './format.js';
 import { PromiseQueue, FetchResult, IFetchAdapter, DictionaryFetchAdapter, WiktionaryFetchAdapter } from './queue.js';
 import { LetterWidget, WordSynchronizer } from './ui.js';
@@ -10,24 +10,14 @@ let queue: PromiseQueue;
 let validator: IFetchAdapter;
 let time_scale = 1.0;
 let currentValidatorType: 'dictionary' | 'wiktionary' = 'wiktionary';
+let currentLanguage: LanguageCode = 'en';
 
 declare global {
     interface Window { _puppeteerGetSpeedup: () => Promise<number>; }
 }
 
 function generateLetters(letters_div: HTMLElement, synchronizer: WordSynchronizer) {
-    letters_div.textContent = '';
-
-    const {alpha_count, letters} = generate();
-    freqmap = alpha_count;
-
-    let ret = new Array<LetterWidget>();
-
-    for (const letter of letters) {
-        ret.push(new LetterWidget(letter, letters_div, synchronizer));
-    }
-
-    return ret;
+    // This function has been removed as requested. The logic is now handled by the WordSynchronizer constructor.
 }
 
 function getFetchResultHandler(word: Element) {
@@ -147,7 +137,7 @@ function publishWord(word: string) {
     published_word.setAttribute('id', id);
     scores.insertBefore(published_word, scores.firstChild);
 
-    const escaped = escapeMissingLetters(word, freqmap);
+    const escaped = escapeMissingLetters(word, freqmap, currentLanguage);
     if (escaped === null) {
         published_word.textContent = word;
         published_word.classList.add('pending-score');
@@ -162,8 +152,15 @@ function toggleSettings() {
     const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
     if (settingsPanel) {
         // When opening, initialize pending state to current state
-        const selector = document.getElementById('validator-selector') as HTMLSelectElement;
-        selector.value = currentValidatorType;
+        const validatorSelector = document.getElementById('validator-selector') as HTMLSelectElement;
+        validatorSelector.value = currentValidatorType;
+
+        // NEW: Initialize language selector
+        const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
+        if (languageSelector) {
+            languageSelector.value = currentLanguage;
+        }
+
 
         settingsPanel.classList.toggle('hidden');
     }
@@ -177,17 +174,36 @@ function closeSettingsPanel() {
 }
 
 function applyChanges() {
-    const selector = document.getElementById('validator-selector') as HTMLSelectElement;
-    const selectedValue = selector?.value as 'dictionary' | 'wiktionary';
+    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
+    if (settingsPanel) {
+        closeSettingsPanel();
 
-    if (selectedValue && selectedValue !== currentValidatorType) {
-        currentValidatorType = selectedValue;
+        // When opening, initialize pending state to current state
+        const validatorSelector = document.getElementById('validator-selector') as HTMLSelectElement;
+        const selectedValidatorValue = validatorSelector?.value as 'dictionary' | 'wiktionary';
 
-        // Restart the game with new settings
-        const again = document.getElementById('again') as HTMLElement;
-        again.click()
+        // NEW: Get language selector value
+        const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
+        const selectedLanguage = languageSelector?.value as 'en' | 'sv';
+
+        let changed = false;
+        if (selectedValidatorValue && selectedValidatorValue !== currentValidatorType) {
+            currentValidatorType = selectedValidatorValue;
+            changed = true;
+        }
+
+        // NEW: Check and update language state
+        if (selectedLanguage && selectedLanguage !== currentLanguage) {
+             currentLanguage = selectedLanguage;
+             changed = true;
+        }
+
+        if (changed) {
+            // Since API calls depend on this setting, we must restart the game too.
+            const again = document.getElementById('again') as HTMLElement;
+            again.click()
+        }
     }
-    closeSettingsPanel();
 }
 
 function initializeSettingsListeners() {
@@ -201,7 +217,7 @@ function initializeSettingsListeners() {
     }
 
     // 2. Discard/Close button listener
-    const closeButton = document.getElementById('discard-changes') as HTMLElement;
+    const closeButton = document.getElementById('discard-changes') as HTMLButtonElement;
     if (closeButton) {
         closeButton.addEventListener('click', closeSettingsPanel);
     }
@@ -210,10 +226,11 @@ function initializeSettingsListeners() {
 async function reset() {
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
 
-    // --- Refactoring Step: Instantiate the desired validator and inject it into PromiseQueue ---
-    // We use currentValidatorType which is now committed via applyChanges()
+    const generated = generate(currentLanguage);
+    freqmap = generated.alpha_count;
+
     if (currentValidatorType === 'wiktionary') {
-        validator = new WiktionaryFetchAdapter();
+        validator = new WiktionaryFetchAdapter(generated.config.name);
     } else {
         validator = new DictionaryFetchAdapter();
     }
@@ -222,16 +239,12 @@ async function reset() {
     const disclaimer = document.getElementById('network-issues-disclaimer') as HTMLElement;
     disclaimer.classList.add('hidden');
 
-    const word = document.getElementById('word')!;
-
-    const synchronizer = new WordSynchronizer(word, publishWord);
-
-    const letters_div = document.getElementById('letters') as HTMLElement;
-    const letters = generateLetters(letters_div, synchronizer);
-    synchronizer.setLetters(letters);
+    // Pass the language configuration and generated letters to the synchronizer
+    const synchronizer = new WordSynchronizer(publishWord, generated.config, generated.letters);
 
     const shuffler = (e: Event) => {
-        const idxs = [...Array(letters_div.children.length).keys()]
+        const letters_div = document.getElementById('letters') as HTMLElement;
+        const idxs = [...Array(letters_div.children?.length || 0).keys()]
         shuffle(idxs);
 
         // NOTE: childNodes is a live list, hence we can't use it directly

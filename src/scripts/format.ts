@@ -1,4 +1,4 @@
-import { getLetterOrdinalNumber } from './generate-letters.js'
+import { LanguageCode, getLetterOrdinalNumber } from './generate-letters.js'
 
 function formatTimeSlot(amount: number) {
     amount = Math.floor(amount);
@@ -21,7 +21,7 @@ function formatResult(res: number) {
     return '' + res;
 }
 
-function escapeMissingLetters(word: string, freqmap: Array<number>) {
+function escapeMissingLetters(word: string, freqmap: Array<number>, lang: LanguageCode = 'en') {
     const freq = [...freqmap];
 
     let valid = true;
@@ -32,7 +32,7 @@ function escapeMissingLetters(word: string, freqmap: Array<number>) {
 
     for (let i = 0; i < word.length; i++) {
         const chr = word.charAt(i);
-        if (--freq[getLetterOrdinalNumber(chr)] < 0) {
+        if (--freq[getLetterOrdinalNumber(chr, lang)] < 0) {
             valid = false;
             ret += open + chr;
             open = '';
