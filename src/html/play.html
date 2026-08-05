@@ -6,14 +6,13 @@
         <meta name="viewport" content="width=device-width">
         <title>Words hunter</title>
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
-        <link rel=stylesheet href="styles.css">
+        <link rel="stylesheet" href="styles.css">
         <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
         <script type="module" src="words-hunter.js"></script>
     </head>
     <body>
         <div id="controls" class="hbox-nowrap">
             <div id="shuffle" class="button" title="Shuffle letters">&#10541;</div>
-            <div id="settings-toggle" class="button" title="Settings">&#9881;</div>
             <div id="timer"><p id="timeleft">00:00</p></div>
             <div id="again" class="button" title="Play again">&#8634;</div>
         </div>
@@ -39,6 +38,10 @@
                 </div>
                 <div id="word">
                     <input id="inpt" type="text" autofocus="true" minlength="3" maxlength="16" autocomplete="off" formmethod="get" pattern="[a-zA-Z]{3,16}">
+                    <select id="language-selector">
+                        <option value="en">🇺🇸</option>
+                        <option value="sv">🇸🇪</option>
+                    </select>
                     <div id="publish" class="button">&#10148;</div>
                 </div>
                 <pre id="result" class="result hidden">Result:    </pre>
@@ -49,24 +52,6 @@
             <div class="vbox-nowrap">
                 <p class="disclaimer">Validation of some words failed due to the network limitations. Press the button below to initiate validation manually</p>
                 <div id="resend" class="button">&#8634;</div>
-            </div>
-        </div>
-        <div id="settings-panel" class="hbox-wrap hidden blurry-bg">
-            <div class="vbox-nowrap">
-                <p class="disclaimer">Select a validation service:</p>
-                <select id="validator-selector" style="width: 100%; margin-bottom: 10px;">
-                    <option value="wiktionary">Wiktionary API</option>
-                    <option value="dictionary">Google Dictionary API</option>
-                </select>
-                <p class="disclaimer">Select language:</p>
-                <select id="language-selector" style="width: 100%; margin-bottom: 10px;">
-                    <option value="en">English (Default)</option>
-                    <option value="sv">Swedish</option>
-                </select>
-                <div class="hbox-nowrap" style="margin-top: 10px;">
-                    <div id="apply-changes" class="button" title="Apply changes">&check;</div>
-                    <div id="discard-changes" class="button" title="Discard changes">&cross;</div>
-                </div>
             </div>
         </div>
     </body>

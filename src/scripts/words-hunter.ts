@@ -16,6 +16,24 @@ declare global {
     interface Window { _puppeteerGetSpeedup: () => Promise<number>; }
 }
 
+/**
+ * Reads the 'validator' query parameter from the URL and sets currentValidatorType.
+ */
+function initializeValidatorFromUrl(): void {
+    const params = new URLSearchParams(window.location.search);
+    const urlValidator = params.get('validator');
+
+    if (urlValidator) {
+        // Ensure the parsed value is one of our allowed types
+        if (urlValidator === 'dictionary' || urlValidator === 'wiktionary') {
+            currentValidatorType = urlValidator as 'dictionary' | 'wiktionary';
+            console.log(`[WordsHunter] Validator set via URL: ${currentValidatorType}`);
+            return;
+        }
+    }
+    // If no valid parameter is found, we keep the default ('wiktionary')
+}
+
 function generateLetters(letters_div: HTMLElement, synchronizer: WordSynchronizer) {
     // This function has been removed as requested. The logic is now handled by the WordSynchronizer constructor.
 }
@@ -148,83 +166,40 @@ function publishWord(word: string) {
     }
 }
 
-function toggleSettings() {
-    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
-    if (settingsPanel) {
-        // When opening, initialize pending state to current state
-        const validatorSelector = document.getElementById('validator-selector') as HTMLSelectElement;
-        validatorSelector.value = currentValidatorType;
-
-        // NEW: Initialize language selector
-        const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
-        if (languageSelector) {
-            languageSelector.value = currentLanguage;
-        }
-
-
-        settingsPanel.classList.toggle('hidden');
-    }
-}
-
-function closeSettingsPanel() {
-    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
-    if (settingsPanel) {
-        settingsPanel.classList.add('hidden');
-    }
-}
-
 function applyChanges() {
-    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
-    if (settingsPanel) {
-        closeSettingsPanel();
+    // Get language selector value
+    const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
+    if (!languageSelector) return;
+    
+    const selectedLanguage = languageSelector?.value as 'en' | 'sv';
 
-        // When opening, initialize pending state to current state
-        const validatorSelector = document.getElementById('validator-selector') as HTMLSelectElement;
-        const selectedValidatorValue = validatorSelector?.value as 'dictionary' | 'wiktionary';
+    let changed = false;
+    if (selectedLanguage && selectedLanguage !== currentLanguage) {
+         currentLanguage = selectedLanguage;
+         changed = true;
+    }
 
-        // NEW: Get language selector value
-        const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
-        const selectedLanguage = languageSelector?.value as 'en' | 'sv';
-
-        let changed = false;
-        if (selectedValidatorValue && selectedValidatorValue !== currentValidatorType) {
-            currentValidatorType = selectedValidatorValue;
-            changed = true;
-        }
-
-        // NEW: Check and update language state
-        if (selectedLanguage && selectedLanguage !== currentLanguage) {
-             currentLanguage = selectedLanguage;
-             changed = true;
-        }
-
-        if (changed) {
-            // Since API calls depend on this setting, we must restart the game too.
-            const again = document.getElementById('again') as HTMLElement;
-            again.click()
-        }
+    if (changed) {
+        // Since API calls depend on this setting, we must restart the game too.
+        const again = document.getElementById('again') as HTMLElement;
+        again.click()
     }
 }
+
 
 function initializeSettingsListeners() {
-    const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
-    if (!settingsPanel) return;
-
-    // 1. Apply button listener
-    const applyButton = document.getElementById('apply-changes') as HTMLButtonElement;
-    if (applyButton) {
-        applyButton.addEventListener('click', applyChanges);
-    }
-
-    // 2. Discard/Close button listener
-    const closeButton = document.getElementById('discard-changes') as HTMLButtonElement;
-    if (closeButton) {
-        closeButton.addEventListener('click', closeSettingsPanel);
+    // 1. Language selector change listener
+    const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
+    if (languageSelector) {
+        languageSelector.addEventListener('change', applyChanges);
     }
 }
 
 async function reset() {
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
+
+    // Initialize validator from URL before generating letters/config
+    initializeValidatorFromUrl();
 
     const generated = generate(currentLanguage);
     freqmap = generated.alpha_count;
@@ -263,11 +238,7 @@ async function reset() {
     const shuffle_btn = document.getElementById('shuffle') as HTMLElement;
     shuffle_btn.addEventListener('click', shuffler);
 
-    // Settings toggle listener
-    const settingsToggleBtn = document.getElementById('settings-toggle') as HTMLElement;
-    if (settingsToggleBtn) {
-        settingsToggleBtn.addEventListener('click', toggleSettings);
-    }
+    // Settings toggle listener removed
 
     const results = document.getElementById('result') as HTMLElement;
     results.classList.add('hidden');
@@ -288,6 +259,9 @@ async function reset() {
 
     // Initialize settings listeners after all elements are available
     initializeSettingsListeners();
+
+    const input = document.getElementById('inpt') as HTMLElement;
+    input.focus();
 }
 
 window.addEventListener('load', function () {
