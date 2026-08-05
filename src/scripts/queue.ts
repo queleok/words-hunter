@@ -40,7 +40,8 @@ interface WiktionaryResponse {
  * IFetchAdapter defines the contract for all word validation strategies.
  */
 interface IFetchAdapter {
-    url(word: string): string;
+    getRequestUrl(word: string): string;
+    getReferenceUrl(word: string): string;
     validate(word: string): Promise<FetchResult>;
 }
 
@@ -48,13 +49,17 @@ interface IFetchAdapter {
  * DictionaryFetchAdapter implements IFetchAdapter using a standard dictionary API (e.g., Google).
  */
 class DictionaryFetchAdapter implements IFetchAdapter {
-    url(word: string): string {
+    getRequestUrl(word: string): string {
         return `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
+    }
+
+    getReferenceUrl(word: string): string {
+        return this.getRequestUrl(word);
     }
 
     async validate(word: string): Promise<FetchResult> {
         try {
-            const response = await fetch(this.url(word));
+            const response = await fetch(this.getRequestUrl(word));
 
             if (response.ok) {
                 const data = await response.json();
@@ -86,14 +91,18 @@ class WiktionaryFetchAdapter implements IFetchAdapter {
         this.language = language;
     }
 
-    url(word: string): string {
+    getRequestUrl(word: string): string {
         // Use action=parse to get categories instead of query results
         return `https://en.wiktionary.org/w/api.php?action=parse&format=json&formatversion=2&page=${encodeURIComponent(word)}&prop=categories&origin=*`;
     }
 
+    getReferenceUrl(word: string): string {
+        return `https://en.wiktionary.org/wiki/${word}#${this.language}`;
+    }
+
     async validate(word: string): Promise<FetchResult> {
         try {
-            const response = await fetch(this.url(word));
+            const response = await fetch(this.getRequestUrl(word));
             if (!response.ok) {
                 throw new Error(`${response.status}`); 
             }

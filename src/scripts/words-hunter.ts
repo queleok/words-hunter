@@ -43,7 +43,7 @@ function getFetchResultHandler(word: Element) {
         switch (fetch_result) {
             case "success":
                 word.setAttribute('class', 'score success');
-                word.setAttribute('href', `https://en.wiktionary.org/wiki/${word.textContent}`);
+                word.setAttribute('href', validator.getReferenceUrl(word.textContent));
                 word.setAttribute('target', '_blank');
                 break;
             case "validation-failure":

@@ -49,11 +49,6 @@ function getLetterOrdinalNumber(letter: string, lang: LanguageCode = 'en') {
     return ret;
 }
 
-// ============= BACKWARD COMPATIBILITY CODE BLOCK BEGINS ========================
-//               a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z
-const limits = [ 3, 2, 2, 2, 3, 2, 2, 2, 3, 1, 2, 3, 2, 3, 3, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2 ];
-// ============= BACKWARD COMPATIBILITY CODE BLOCK ENDS ========================
-
 /**
  * Checks if a character is defined as a vowel in the provided configuration.
  */
@@ -156,4 +151,4 @@ function generate(langCode: LanguageCode = 'en'): { alpha_count: number[], lette
     return { ...results, config };
 }
 
-export { LanguageConfig, LanguageCode, limits, generate, getLetterOrdinalNumber, shuffle };
+export { LanguageConfig, LanguageCode, generate, getLetterOrdinalNumber, shuffle };
