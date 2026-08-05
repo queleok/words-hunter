@@ -16,6 +16,23 @@ declare global {
     interface Window { _puppeteerGetSpeedup: () => Promise<number>; }
 }
 
+/**
+ * Reads the 'validator' query parameter from the URL and sets currentValidatorType.
+ */
+function initializeValidatorFromUrl(): void {
+    const params = new URLSearchParams(window.location.search);
+    const urlValidator = params.get('validator');
+
+    if (urlValidator) {
+        // Ensure the parsed value is one of our allowed types
+        if (urlValidator === 'dictionary' || urlValidator === 'wiktionary') {
+            currentValidatorType = urlValidator as 'dictionary' | 'wiktionary';
+            return;
+        }
+    }
+    // If no valid parameter is found, we keep the default ('wiktionary')
+}
+
 function generateLetters(letters_div: HTMLElement, synchronizer: WordSynchronizer) {
     // This function has been removed as requested. The logic is now handled by the WordSynchronizer constructor.
 }
@@ -152,15 +169,10 @@ function toggleSettings() {
     const settingsPanel = document.getElementById('settings-panel') as HTMLElement;
     if (settingsPanel) {
         // When opening, initialize pending state to current state
-        const validatorSelector = document.getElementById('validator-selector') as HTMLSelectElement;
-        validatorSelector.value = currentValidatorType;
-
-        // NEW: Initialize language selector
         const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
         if (languageSelector) {
             languageSelector.value = currentLanguage;
         }
-
 
         settingsPanel.classList.toggle('hidden');
     }
@@ -178,21 +190,11 @@ function applyChanges() {
     if (settingsPanel) {
         closeSettingsPanel();
 
-        // When opening, initialize pending state to current state
-        const validatorSelector = document.getElementById('validator-selector') as HTMLSelectElement;
-        const selectedValidatorValue = validatorSelector?.value as 'dictionary' | 'wiktionary';
-
-        // NEW: Get language selector value
+        // Get language selector value
         const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
         const selectedLanguage = languageSelector?.value as 'en' | 'sv';
 
         let changed = false;
-        if (selectedValidatorValue && selectedValidatorValue !== currentValidatorType) {
-            currentValidatorType = selectedValidatorValue;
-            changed = true;
-        }
-
-        // NEW: Check and update language state
         if (selectedLanguage && selectedLanguage !== currentLanguage) {
              currentLanguage = selectedLanguage;
              changed = true;
@@ -225,6 +227,9 @@ function initializeSettingsListeners() {
 
 async function reset() {
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
+
+    // Initialize validator from URL before generating letters/config
+    initializeValidatorFromUrl();
 
     const generated = generate(currentLanguage);
     freqmap = generated.alpha_count;
