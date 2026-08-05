@@ -138,19 +138,6 @@ body {
     animation: cycleSymbols 0.8s ease-in-out infinite;
 }
 
-@keyframes cycleSymbols {
-  0%   { content: "⠋"; }
-  10%  { content: "⠙"; }
-  20%  { content: "⠹"; }
-  30%  { content: "⠸"; }
-  40%  { content: "⠼"; }
-  50%  { content: "⠴"; }
-  60%  { content: "⠦"; }
-  70%  { content: "⠧"; }
-  80%  { content: "⠇"; }
-  90%  { content: "⠏"; }
-}
-
 .failure {
     color: black;
     filter: invert(40%) sepia(81%) saturate(405%) hue-rotate(311deg) brightness(97%) contrast(93%);
@@ -172,25 +159,28 @@ body {
 
 input[type="text"] {
     font-size: 1.2em;
-    width: 208px;
+    width: 184px;
     height: 38px;
-    padding-right: 38px;
-    padding-left: 10px;
+    padding-right: 36px;
+    padding-left: 36px;
     border-radius: 20px;
     display: block;
 }
 
-// Settings overlay styles
-#settings-panel {
-    position: absolute;
-    top: 52px;
-    width: 240px;
-    height: 240px;
-    padding: 10px;
-    left: calc(25% - 130px);
-    align-items: center;
+#language-selector {
+  margin-left: -258px;
+  width: 36px;
+  aspect-ratio: 1;
+  background: none;
+  border: none;
+  border-radius: 0;
+  appearance: none;
+  text-align: center;
+  text-align-last: center;
+  font-size: 1rem;
 }
 
+// Settings overlay styles removed
 #network-issues-disclaimer {
     position: absolute;
     top: 52px;
@@ -238,12 +228,6 @@ input[type="text"] {
 
     #letters {
         margin-bottom: 10px;
-    }
-
-    #settings-panel {
-        top: unset;
-        bottom: 0px;
-        left: calc(50% - 130px);
     }
 
     #network-issues-disclaimer {
