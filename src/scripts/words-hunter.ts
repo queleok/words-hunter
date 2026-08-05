@@ -177,6 +177,8 @@ function applyChanges() {
     if (selectedLanguage && selectedLanguage !== currentLanguage) {
          currentLanguage = selectedLanguage;
          changed = true;
+         // Persist the change to local storage
+         localStorage.setItem('selectedLanguage', selectedLanguage);
     }
 
     if (changed) {
@@ -185,7 +187,6 @@ function applyChanges() {
         again.click()
     }
 }
-
 
 function initializeSettingsListeners() {
     // 1. Language selector change listener
@@ -196,6 +197,15 @@ function initializeSettingsListeners() {
 }
 
 async function reset() {
+    // Check localStorage for saved language preference
+    const storedLanguage = localStorage.getItem('selectedLanguage') as LanguageCode | null;
+    if (storedLanguage && ['en', 'sv'].includes(storedLanguage)) {
+        currentLanguage = storedLanguage;
+
+        const languageSelector = document.getElementById('language-selector') as HTMLSelectElement;
+        languageSelector.value = currentLanguage;
+    }
+
     if (window.hasOwnProperty('_puppeteerGetSpeedup')) time_scale = 1 / await window._puppeteerGetSpeedup();
 
     // Initialize validator from URL before generating letters/config
