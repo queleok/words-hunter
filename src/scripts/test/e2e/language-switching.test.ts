@@ -73,17 +73,26 @@ afterEach(async () => {
     await page.setRequestInterception(false);
 });
 
+async function selectLanguage(lang: 'en' | 'sv'): Promise<void> {
+    // Use native DOM to set the select value, bypassing TypeScript ElementHandle limitations
+    await page.evaluate((lang) => {
+        const selector = document.getElementById('language-selector') as HTMLSelectElement;
+        if (selector) {
+            selector.value = lang;
+            selector.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }, lang);
+}
+
 test('Swedish language selection persists to localStorage', async () => {
-    const selector = (await page.$('#language-selector'))!;
-    await selector.selectOption({ value: 'sv' });
+    await selectLanguage('sv');
 
     const storedLanguage = await page.evaluate(() => localStorage.getItem('selectedLanguage'));
     expect(storedLanguage).toBe('sv');
 });
 
 test('English language selection persists to localStorage', async () => {
-    const selector = (await page.$('#language-selector'))!;
-    await selector.selectOption({ value: 'en' });
+    await selectLanguage('en');
 
     const storedLanguage = await page.evaluate(() => localStorage.getItem('selectedLanguage'));
     expect(storedLanguage).toBe('en');
@@ -91,8 +100,7 @@ test('English language selection persists to localStorage', async () => {
 
 test('Language is restored from localStorage on reload', async () => {
     // Select Swedish first, then reload to verify it's remembered
-    const selector = (await page.$('#language-selector'))!;
-    await selector.selectOption({ value: 'sv' });
+    await selectLanguage('sv');
 
     const storedLanguage = await page.evaluate(() => localStorage.getItem('selectedLanguage'));
     expect(storedLanguage).toBe('sv');
@@ -102,15 +110,14 @@ test('Language is restored from localStorage on reload', async () => {
 
     // Verify the language selector shows Swedish as selected
     const currentLanguage = await page.evaluate(() => {
-        return document.getElementById('language-selector')?.value;
+        return (document.getElementById('language-selector') as HTMLSelectElement)?.value;
     });
     expect(currentLanguage).toBe('sv');
 });
 
 test('Swedish characters åäö can be typed and highlighted', async () => {
     // Select Swedish language first
-    const selector = (await page.$('#language-selector'))!;
-    await selector.selectOption({ value: 'sv' });
+    await selectLanguage('sv');
 
     // Wait for the game to reset after language change
     await page.waitForSelector('.hidden');
@@ -136,8 +143,7 @@ test('Swedish characters åäö can be typed and highlighted', async () => {
 
 test('Swedish word can be published successfully after language switch', async () => {
     // Select Swedish and wait for reset
-    const selector = (await page.$('#language-selector'))!;
-    await selector.selectOption({ value: 'sv' });
+    await selectLanguage('sv');
     await page.waitForSelector('.hidden');
 
     // Type a simple word that should be valid in Swedish context
@@ -159,8 +165,7 @@ test('Swedish word can be published successfully after language switch', async (
 
 test('English mode does not accept Swedish-specific characters', async () => {
     // Ensure English is selected
-    const selector = (await page.$('#language-selector'))!;
-    await selector.selectOption({ value: 'en' });
+    await selectLanguage('en');
 
     // Wait for reset
     await page.waitForSelector('.hidden');
@@ -185,8 +190,7 @@ test('English mode does not accept Swedish-specific characters', async () => {
 });
 
 test('Swedish-specific letters are available after switching to Swedish', async () => {
-    const selector = (await page.$('#language-selector'))!;
-    await selector.selectOption({ value: 'sv' });
+    await selectLanguage('sv');
     await page.waitForSelector('.hidden');
 
     // Verify that the letter widgets contain Swedish characters
@@ -206,8 +210,7 @@ test('Swedish-specific letters are available after switching to Swedish', async 
 
 test('Language switch resets the game state properly', async () => {
     // Select Swedish and wait for reset
-    const selector = (await page.$('#language-selector'))!;
-    await selector.selectOption({ value: 'sv' });
+    await selectLanguage('sv');
     await page.waitForSelector('.hidden');
 
     // Verify timer is running again after language switch
@@ -218,8 +221,7 @@ test('Language switch resets the game state properly', async () => {
 
 test('Switching back to English clears Swedish-specific state', async () => {
     // First select Swedish and wait for reset
-    const selector = (await page.$('#language-selector'))!;
-    await selector.selectOption({ value: 'sv' });
+    await selectLanguage('sv');
     await page.waitForSelector('.hidden');
 
     // Verify Swedish characters are available
@@ -234,7 +236,7 @@ test('Switching back to English clears Swedish-specific state', async () => {
     expect(swedish_chars_visible).toBe(true);
 
     // Now switch back to English and wait for reset
-    await selector.selectOption({ value: 'en' });
+    await selectLanguage('en');
     await page.waitForSelector('.hidden');
 
     // Verify Swedish characters are no longer available
