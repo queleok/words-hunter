@@ -1,9 +1,11 @@
+import { AgainView } from '../Views/AgainView.js';
+
 export class AgainController {
-    private againButton: HTMLElement;
+    private view: AgainView = new AgainView('again');
     private onAgain?: () => void;
 
-    constructor(againId: string) {
-        this.againButton = document.getElementById(againId)!;
+    constructor() {
+        this.view.button.addEventListener('click', this.handleAgain.bind(this));
     }
 
     setOnAgain(callback?: () => void): void {

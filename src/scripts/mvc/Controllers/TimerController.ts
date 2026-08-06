@@ -1,33 +1,29 @@
 import { TimerView } from '../Views/TimerView.js';
 
 export class TimerController {
-    private timerView: TimerView;
-    private speedup: number;
-
-    constructor(timerDisplayElement?: HTMLElement, speedup = 1) {
-        if (timerDisplayElement) {
-            this.timerView = new TimerView(timerDisplayElement);
-        } else {
-            this.timerView = null as any;
-        }
-        this.speedup = speedup;
-    }
+    private view: TimerView = new TimerView('timeleft');
+    private timer?: ReturnType<typeof setInterval>;
+    private count: number = 0;
 
     start(seconds: number): void {
-        if (this.timerView) {
-            this.timerView.start(seconds, this.speedup);
-        }
+        this.stop();
+
+        this.count = seconds;
+        this.view.render(this.count);
+        this.timer = setInterval(this.decay.bind(this), 1000);
     }
 
-    stop(): void {
-        if (this.timerView) {
-            this.timerView.stop();
-        }
+    private decay(): void {
+        --this.count;
+        this.view.render(this.count);
+
+        if (this.count <= 0) this.stop();
     }
 
-    reset(seconds: number): void {
-        if (this.timerView) {
-            this.timerView.reset(seconds);
+    private stop(): void {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = undefined;
         }
     }
 }

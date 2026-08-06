@@ -6,7 +6,6 @@ import { PromiseQueue, FetchResult, IFetchAdapter, DictionaryFetchAdapter, Wikti
 import { LetterWidget, WordSynchronizer } from './ui.js';
 
 import { GameController } from './mvc/Controllers/GameController.js';
-import { createDefaultConfig } from './mvc/GameConfig.js';
 
 let freqmap = Array(26).fill(0);
 let queue: PromiseQueue;
@@ -280,7 +279,8 @@ async function reset() {
 window.addEventListener('load', function () {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('redesign') === 'true') {
-        const controller = new GameController(createDefaultConfig());
+        const controller = new GameController();
+        controller.reset();
     } else {
         reset();
     }

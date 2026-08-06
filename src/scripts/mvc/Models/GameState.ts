@@ -1,18 +1,11 @@
 import { GameConfig } from './GameConfig.js';
+import { PublishedWord } from './PublishedWord.js';
 
 export interface GameState {
     wordBuffer: string;
     publishedWords: PublishedWord[];
     timerSeconds: number;
     isRunning: boolean;
-    shuffled: boolean;
-}
-
-export interface PublishedWord {
-    text: string;
-    id: string;
-    isValidated: boolean;
-    fetchResult?: 'success' | 'validation-failure' | 'no-definition' | 'network-failure';
 }
 
 export function createInitialState(config: GameConfig): GameState {
@@ -20,8 +13,7 @@ export function createInitialState(config: GameConfig): GameState {
         wordBuffer: '',
         publishedWords: [],
         timerSeconds: config.timeLimitMinutes * 60,
-        isRunning: true,
-        shuffled: false
+        isRunning: true
     };
 }
 
@@ -30,9 +22,7 @@ export function resetState(state: GameState): GameState {
         ...state,
         wordBuffer: '',
         publishedWords: [],
-        timerSeconds: state.isRunning ? state.timerSeconds : 0,
-        isRunning: true,
-        shuffled: false
+        isRunning: true
     };
 }
 
