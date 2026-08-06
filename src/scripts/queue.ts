@@ -196,4 +196,4 @@ function validateWord(words: Array<WordData>): boolean {
     return is_there_non_abbreviation;
 }
 
-export {PromiseQueue, FetchResult, IFetchAdapter, DictionaryFetchAdapter, WiktionaryFetchAdapter};
+export {Definition, WordData, PromiseQueue, FetchResult, IFetchAdapter, DictionaryFetchAdapter, WiktionaryFetchAdapter};
