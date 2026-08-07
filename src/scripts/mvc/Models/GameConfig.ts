@@ -1,6 +1,4 @@
-import { LanguageCode } from '../../generate-letters.js';
-
-export { LanguageCode };
+import { LanguageCode } from './LanguageState.js';
 
 export interface GameConfig {
     language: LanguageCode;

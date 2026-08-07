@@ -56,8 +56,8 @@ export function getLanguageConfig(language: LanguageCode): LanguageConfig {
 /**
  * Generates 16 random letters for the game grid.
  */
-export function generateLetters(): LetterData[] {
-    const generated = generate('en');
+export function generateLetters(lang: LanguageCode): LetterData[] {
+    const generated = generate(lang);
     return generated.letters.map((letter) => {
         const ix = generated.config.alphabet.indexOf(letter);
         return { letter: letter, frequency: generated.config.frequencies[ix], limit: generated.config.limits[ix] };
