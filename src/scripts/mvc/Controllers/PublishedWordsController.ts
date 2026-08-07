@@ -19,4 +19,8 @@ export class PublishedWordsController {
         this.state = createPublishedWordsState();
         this.view.render(this.state);
     }
+
+    getState() {
+        return this.state;
+    }
 }

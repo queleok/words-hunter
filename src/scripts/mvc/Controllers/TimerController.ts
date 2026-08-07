@@ -3,6 +3,7 @@ import { TimerView } from '../Views/TimerView.js';
 export class TimerController {
     private view: TimerView = new TimerView('timeleft');
     private timer?: ReturnType<typeof setInterval>;
+    private onEnd?: () => void;
     private count: number = 0;
 
     start(seconds: number): void {
@@ -17,7 +18,12 @@ export class TimerController {
         --this.count;
         this.view.render(this.count);
 
-        if (this.count <= 0) this.stop();
+        if (this.count <= 0) {
+            this.stop();
+            if (this.onEnd) {
+                this.onEnd();
+            }
+        }
     }
 
     private stop(): void {
@@ -25,5 +31,9 @@ export class TimerController {
             clearInterval(this.timer);
             this.timer = undefined;
         }
+    }
+
+    setOnEnd(callback: () => void): void {
+        this.onEnd = callback;
     }
 }
