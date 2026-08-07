@@ -25,7 +25,7 @@ export class InputController {
         this.view.render(state);
     }
 
-    private submit(): void {
+    submit(): void {
         this.reset();
         if (this.onSubmit) {
             this.onSubmit();
