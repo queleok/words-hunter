@@ -3,6 +3,7 @@ import { createInputState, InputState } from '../Models/InputState.js';
 
 export class InputController {
     private view: InputView = new InputView('inpt');
+    private last: InputState = createInputState();
     private onSubmit?: () => void;
 
     constructor() {
@@ -26,9 +27,14 @@ export class InputController {
     }
 
     submit(): void {
+        this.last = { text: this.view.getInput().value };
         this.reset();
         if (this.onSubmit) {
             this.onSubmit();
         }
+    }
+
+    getLastSubmitted(): InputState {
+        return this.last;
     }
 }
