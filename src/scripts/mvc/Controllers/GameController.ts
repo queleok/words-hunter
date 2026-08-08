@@ -21,7 +21,7 @@ export class GameController {
         this.again.setOnAgain(this.reset.bind(this));
         this.language.setOnChange(this.reset.bind(this));
         this.publish.setOnClick(() => this.input.submit());
-        this.input.setOnSubmit(() => this.publishedWords.addPublishedWord(this.input.getLastSubmitted()));
+        this.input.setOnSubmit(this.publishedWords.addPublishedWord.bind(this.publishedWords));
         this.timer.setOnEnd(() => this.result.end(this.publishedWords.getState()));
     }
 

@@ -10,8 +10,8 @@ export class PublishedWordsController {
         this.state = state ? [...state] : createPublishedWordsState();
     }
 
-    addPublishedWord(word: InputState): void {
-        this.state.push({ text: word.text });
+    addPublishedWord(word: string): void {
+        this.state.push({ text: word });
         this.view.render(this.state);
     }
 

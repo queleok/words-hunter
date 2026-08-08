@@ -3,14 +3,14 @@ import { createInputState, InputState } from '../Models/InputState.js';
 
 export class InputController {
     private view: InputView = new InputView('inpt');
-    private last: InputState = createInputState();
-    private onSubmit?: () => void;
+    private state: InputState = createInputState();
+    private onSubmit?: (published: string) => void;
 
     constructor() {
         this.view.getInput().addEventListener('keydown', this.handleKeyDown.bind(this));
     }
 
-    setOnSubmit(callback?: () => void): void {
+    setOnSubmit(callback?: (published: string) => void): void {
         this.onSubmit = callback;
     }
 
@@ -27,14 +27,10 @@ export class InputController {
     }
 
     submit(): void {
-        this.last = { text: this.view.getInput().value };
+        const published = this.view.getInput().value;
         this.reset();
         if (this.onSubmit) {
-            this.onSubmit();
+            this.onSubmit(published);
         }
-    }
-
-    getLastSubmitted(): InputState {
-        return this.last;
     }
 }
