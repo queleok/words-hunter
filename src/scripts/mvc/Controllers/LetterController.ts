@@ -50,12 +50,12 @@ export class LetterController {
         }
     }
 
-    activate(letter: string): void {
+    activate(letter: string, bufferIndex: number): void {
         const cellIndex = this.view.getPassiveCellIndex(letter);
 
-        this.state.buffer.push(cellIndex);
+        this.state.buffer.splice(bufferIndex, 0, cellIndex);
 
-        if (cellIndex) this.view.toggleCell(cellIndex);
+        if (cellIndex !== undefined) this.view.toggleCell(cellIndex);
         // TODO: handle overdraft
     }
 
@@ -64,7 +64,14 @@ export class LetterController {
 
         this.state.buffer.splice(bufferIndex, 1);
 
-        if (cellIndex) this.view.toggleCell(cellIndex);
+        if (cellIndex !== undefined) this.view.toggleCell(cellIndex);
         // TODO: handle overdraft
+    }
+
+    deactivateAll(): void {
+        this.state.buffer
+            .forEach((index) => { if (index !== undefined) this.view.toggleCell(index); });
+
+        this.state.buffer = [];
     }
 }

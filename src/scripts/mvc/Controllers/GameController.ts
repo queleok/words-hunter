@@ -19,10 +19,25 @@ export class GameController {
 
     constructor() {
         this.again.setOnAgain(this.reset.bind(this));
+
         this.language.setOnChange(this.reset.bind(this));
+
         this.publish.setOnClick(() => this.input.submit());
-        this.input.setOnSubmit(this.publishedWords.addPublishedWord.bind(this.publishedWords));
-        this.timer.setOnEnd(() => this.result.end(this.publishedWords.getState()));
+
+        this.input.setOnSubmit((word: string) => {
+            this.letters.deactivateAll();
+            this.publishedWords.addPublishedWord(word);
+        });
+        this.input.setOnInsert(this.letters.activate.bind(this.letters));
+        this.input.setOnRemove(this.letters.deactivate.bind(this.letters));
+
+        this.letters.setAppend(this.input.append.bind(this.input));
+        this.letters.setRemove(this.input.remove.bind(this.input));
+
+        this.timer.setOnEnd(() => {
+            this.letters.deactivateAll();
+            this.result.end(this.publishedWords.getState());
+        });
     }
 
     reset(): void {
