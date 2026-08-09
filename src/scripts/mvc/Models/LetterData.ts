@@ -8,6 +8,11 @@ export interface LetterData {
     limit: number;
 }
 
+export interface LettersState {
+    letters: LetterData[];
+    buffer: (number | undefined)[];
+}
+
 export function createLetterData(letter: string, frequency: number, limit: number): LetterData {
     return { letter, frequency, limit };
 }
@@ -56,10 +61,10 @@ export function getLanguageConfig(language: LanguageCode): LanguageConfig {
 /**
  * Generates 16 random letters for the game grid.
  */
-export function generateLetters(lang: LanguageCode): LetterData[] {
+export function generateLetters(lang: LanguageCode): LettersState {
     const generated = generate(lang);
-    return generated.letters.map((letter) => {
+    return { letters: generated.letters.map((letter) => {
         const ix = generated.config.alphabet.indexOf(letter);
         return { letter: letter, frequency: generated.config.frequencies[ix], limit: generated.config.limits[ix] };
-    });
+    }), buffer: []};
 }

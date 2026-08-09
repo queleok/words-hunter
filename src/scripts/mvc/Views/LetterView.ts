@@ -7,8 +7,7 @@ export class LetterView {
         this.container = document.getElementById(selector) as HTMLElement;
     }
 
-    render(letters: LetterData[]): void {
-        // Clear existing children
+    render(letters: LetterData[], onCellClick?: (event: MouseEvent) => void): void {
         while (this.container.firstChild) {
             this.container.removeChild(this.container.firstChild);
         }
@@ -17,9 +16,43 @@ export class LetterView {
             const cell = document.createElement('div');
             cell.classList.add('cell', 'hbox-nowrap');
             cell.textContent = letter.letter;
-            // Store the LetterData on the element for later controller access
-            (cell as HTMLElement).dataset.letterIndex = String(index);
+            cell.dataset.letterIndex = String(index);
             this.container.appendChild(cell);
+
+            if (onCellClick) cell.addEventListener('click', onCellClick);
         });
+    }
+
+    toggleCell(index: number): 'active' | 'passive' {
+        const cell = this.container.children[index] as HTMLElement;
+        if (!cell) return 'passive';
+        const isActive = cell.classList.contains('highlighted');
+        if (isActive) {
+            cell.classList.remove('highlighted');
+            return 'passive';
+        } else {
+            cell.classList.add('highlighted');
+            return 'active';
+        }
+    }
+
+    activateCell(index: number): void {
+        const cell = this.container.children[index] as HTMLElement;
+        if (cell) cell.classList.add('highlighted');
+    }
+
+    deactivateCell(index: number): void {
+        const cell = this.container.children[index] as HTMLElement;
+        if (cell) cell.classList.remove('highlighted');
+    }
+
+    getPassiveCellIndex(letter: string): number | undefined {
+        for (let i = 0; i < this.container.children.length; i++) {
+            const cell = this.container.children[i] as HTMLElement;
+            if ((cell.textContent || '').trim() === letter && !cell.classList.contains('highlighted')) {
+                return i;
+            }
+        }
+        return undefined;
     }
 }
