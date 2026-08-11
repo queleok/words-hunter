@@ -1,5 +1,3 @@
-import { LetterData } from '../Models/LetterData.js';
-
 export class LetterView {
     private container: HTMLElement;
 
@@ -7,15 +5,15 @@ export class LetterView {
         this.container = document.getElementById(selector) as HTMLElement;
     }
 
-    render(letters: LetterData[], onCellClick?: (event: MouseEvent) => void): void {
+    render(letters: string, onCellClick?: (event: MouseEvent) => void): void {
         while (this.container.firstChild) {
             this.container.removeChild(this.container.firstChild);
         }
 
-        letters.forEach((letter, index) => {
+        letters.split('').forEach((letter, index) => {
             const cell = document.createElement('div');
             cell.classList.add('cell', 'hbox-nowrap');
-            cell.textContent = letter.letter;
+            cell.textContent = letter;
             cell.dataset.letterIndex = String(index);
             this.container.appendChild(cell);
 

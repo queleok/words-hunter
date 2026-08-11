@@ -36,16 +36,33 @@ export class GameController {
 
         this.timer.setOnEnd(() => {
             this.letters.deactivateAll();
+            this.letters.setAppend();
+            this.letters.setRemove();
+            this.input.setOnInsert();
+            this.input.setOnRemove();
+            this.input.setOnSubmit();
             this.result.end(this.publishedWords.getState());
         });
     }
 
     reset(): void {
         // Restart the game
+
         this.result.reset();
         this.input.reset();
         this.publishedWords.reset();
         this.letters.reset(this.language.getState());
+
+        this.input.setOnSubmit((word: string) => {
+            this.letters.deactivateAll();
+            this.publishedWords.addPublishedWord(word);
+        });
+        this.input.setOnInsert(this.letters.activate.bind(this.letters));
+        this.input.setOnRemove(this.letters.deactivate.bind(this.letters));
+
+        this.letters.setAppend(this.input.append.bind(this.input));
+        this.letters.setRemove(this.input.remove.bind(this.input));
+
         this.timer.start(2 * 60);
     }
 }

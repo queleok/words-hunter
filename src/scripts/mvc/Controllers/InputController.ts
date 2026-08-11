@@ -12,22 +12,22 @@ export class InputController {
     private state: InputState = createInputState();
     private onSubmit?: (published: string) => void;
     private onInsert?: (letter: string, index: number) => void;
-    private onRemove?: (index: number) => void;
+    private onRemove?: (letter: string, index: number) => void;
 
     constructor() {
         this.view.getInput().addEventListener('keydown', this.handleKeyDown.bind(this));
         this.view.getInput().addEventListener('beforeinput', this.handleBeforeInput.bind(this));
     }
 
-    setOnSubmit(callback: (published: string) => void): void {
+    setOnSubmit(callback?: (published: string) => void): void {
         this.onSubmit = callback;
     }
 
-    setOnInsert(callback: (letter: string, index: number) => void) {
+    setOnInsert(callback?: (letter: string, index: number) => void) {
         this.onInsert = callback;
     }
 
-    setOnRemove(callback: (index: number) => void) {
+    setOnRemove(callback?: (letter: string, index: number) => void) {
         this.onRemove = callback;
     }
 
@@ -56,10 +56,11 @@ export class InputController {
 
         const len = end - begin;
 
-        this.state.text = spliceReplace(this.state.text, begin, len, data).remaining;
+        const spliced = spliceReplace(this.state.text, begin, len, data);
+        this.state.text = spliced.remaining;
 
         if (this.onRemove) {
-            for (let i = len; i > 0; --i) this.onRemove(begin + i - 1);
+            for (let i = len; i > 0; --i) this.onRemove(spliced.removed[i - 1], begin + i - 1);
         }
 
         if (this.onInsert) {
