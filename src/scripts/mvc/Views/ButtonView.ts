@@ -1,4 +1,4 @@
-export class AgainView {
+export class ButtonView {
     button: HTMLElement;
 
     constructor(selector: string) {

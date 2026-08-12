@@ -1,5 +1,5 @@
 import { TimerController } from './TimerController.js';
-import { AgainController } from './AgainController.js';
+import { ButtonController } from './ButtonController.js';
 import { LetterController } from './LetterController.js';
 import { LanguageController } from './LanguageController.js';
 import { InputController } from './InputController.js';
@@ -9,7 +9,8 @@ import { ResultController } from './ResultController.js';
 
 export class GameController {
     private timer: TimerController = new TimerController();
-    private again: AgainController = new AgainController();
+    private again: ButtonController = new ButtonController('again');
+    private shuffle: ButtonController = new ButtonController('shuffle');
     private letters: LetterController = new LetterController();
     private language: LanguageController = new LanguageController();
     private input: InputController = new InputController();
@@ -18,7 +19,7 @@ export class GameController {
     private result: ResultController = new ResultController();
 
     constructor() {
-        this.again.setOnAgain(this.reset.bind(this));
+        this.again.setOnClick(this.reset.bind(this));
 
         this.language.setOnChange(this.reset.bind(this));
 
