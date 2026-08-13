@@ -1,4 +1,4 @@
-import { LettersState, generateLetters } from '../Models/LetterData.js';
+import { LettersState, generateLetters } from '../Models/LettersState.js';
 import { LetterView } from '../Views/LetterView.js';
 import { LanguageCode } from '../Models/LanguageState.js';
 import { getLetterOrdinalNumber, shuffle } from '../../generate-letters.js';
