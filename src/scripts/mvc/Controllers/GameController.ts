@@ -20,6 +20,10 @@ export class GameController {
 
     constructor() {
         this.again.setOnClick(this.reset.bind(this));
+        this.shuffle.setOnClick(() => {
+            this.input.reset();
+            this.letters.shuffle();
+        });
 
         this.language.setOnChange(this.reset.bind(this));
 

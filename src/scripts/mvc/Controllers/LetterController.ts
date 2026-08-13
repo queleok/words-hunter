@@ -1,7 +1,7 @@
 import { LettersState, generateLetters } from '../Models/LetterData.js';
 import { LetterView } from '../Views/LetterView.js';
 import { LanguageCode } from '../Models/LanguageState.js';
-import { getLetterOrdinalNumber } from '../../generate-letters.js';
+import { getLetterOrdinalNumber, shuffle } from '../../generate-letters.js';
 
 export class LetterController {
     private view: LetterView = new LetterView('letters');
@@ -20,6 +20,17 @@ export class LetterController {
 
     setRemove(callback?: (index: number) => boolean) {
         this.remove = callback;
+    }
+
+    shuffle(): void {
+        const lettersArray = this.state.letters.split('');
+
+        shuffle(lettersArray);
+
+        this.state.letters = lettersArray.join('');
+        this.state.buffer = [];
+
+        this.view.render(this.state.letters);
     }
 
     private handleCellClicked(event: MouseEvent): void {
