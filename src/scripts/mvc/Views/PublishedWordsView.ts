@@ -1,4 +1,4 @@
-import { PublishedWord } from '../Models/PublishedWordsState.js';
+import { PublishedWord } from '../Models/PublishedWord.js';
 
 export class PublishedWordsView {
     private container: HTMLElement;
@@ -15,6 +15,12 @@ export class PublishedWordsView {
         words.forEach((word) => {
             const div = document.createElement('div');
             div.classList.add('score');
+
+            if (word.status === 'pending') div.classList.add('pending-score');
+            else if (word.status === 'valid') div.classList.add('success');
+            else if (word.status === 'invalid') div.classList.add('failure');
+            else if (word.status === 'stale') div.classList.add('network-failure');
+
             div.textContent = word.text;
             this.container.appendChild(div);
         });
