@@ -1,7 +1,7 @@
-import { FetchResult } from '../../queue.js';
-import { ValidatorService } from './ValidatorService.js';
+import { ValidationResult } from '../Models/ValidationResult.js';
+import { ExternalAPI } from './ExternalAPI.js';
 
-export class WiktionaryValidatorService extends ValidatorService {
+export class WiktionaryAPI extends ExternalAPI {
     private language: string;
 
     constructor(language: string) {
@@ -17,22 +17,24 @@ export class WiktionaryValidatorService extends ValidatorService {
         return `https://en.wiktionary.org/wiki/${word}#${this.language}`;
     }
 
-    async validate(word: string): Promise<FetchResult> {
+    async validate(word: string, signal: AbortSignal): Promise<ValidationResult> {
+        if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+
         try {
-            const response = await fetch(this.getRequestUrl(word));
+            const response = await fetch(this.getRequestUrl(word), { signal });
             if (!response.ok) {
                 throw new Error(`${response.status}`);
             }
 
             const data = await response.json();
             if (this.isCategorizedAsTargetType(data)) {
-                return "success";
+                return { word: word, status: 'valid' };
             } else {
-                return "no-definition";
+                return { word: word, status: 'invalid' };
             }
         } catch (e) {
             console.error("Wiktionary API fetch failed:", e);
-            return "network-failure";
+            return { word: word, status: 'stale' };
         }
     }
 

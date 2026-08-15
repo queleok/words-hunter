@@ -6,6 +6,8 @@ import { InputController } from './InputController.js';
 import { PublishController } from './PublishController.js';
 import { PublishedWordsController } from './PublishedWordsController.js';
 import { ResultController } from './ResultController.js';
+import { ValidationService } from '../Services/ValidationService.js';
+import { ValidationResult } from '../Models/ValidationResult.js';
 
 export class GameController {
     private timer: TimerController = new TimerController();
@@ -17,6 +19,8 @@ export class GameController {
     private publish: PublishController = new PublishController();
     private publishedWords: PublishedWordsController = new PublishedWordsController();
     private result: ResultController = new ResultController();
+
+    private validator: ValidationService = new ValidationService();
 
     constructor() {
         this.again.setOnClick(this.reset.bind(this));
@@ -52,15 +56,19 @@ export class GameController {
 
     reset(): void {
         // Restart the game
+        this.validator.reset();
 
         this.result.reset();
         this.input.reset();
         this.publishedWords.reset();
         this.letters.reset(this.language.getState());
 
-        this.input.setOnSubmit((word: string) => {
+        this.input.setOnSubmit(async (word: string) => {
             this.letters.deactivateAll();
             this.publishedWords.addPublishedWord(word);
+            this.validator.validate(word)
+                .then(this.publishedWords.handleValidationResult.bind(this.publishedWords))
+                .catch((e) => { console.log(`Caught error: ${e}`); });
         });
         this.input.setOnInsert(this.letters.activate.bind(this.letters));
         this.input.setOnRemove(this.letters.deactivate.bind(this.letters));

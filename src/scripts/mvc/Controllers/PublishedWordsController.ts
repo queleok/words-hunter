@@ -1,6 +1,7 @@
 import { PublishedWord, PublishedWordStatus } from '../Models/PublishedWord.js';
 import { PublishedWordsView } from '../Views/PublishedWordsView.js';
 import { InputState } from '../Models/InputState.js';
+import { ValidationResult } from '../Models/ValidationResult.js';
 
 export class PublishedWordsController {
     private view: PublishedWordsView = new PublishedWordsView();
@@ -36,5 +37,14 @@ export class PublishedWordsController {
 
     getState() {
         return this.state;
+    }
+
+    handleValidationResult(result: ValidationResult) {
+        const found = this.state.findIndex((w) => w.text === result.word);
+        if (found < 0) return;
+
+        this.state[found].status = result.status;
+
+        this.view.render(this.state);
     }
 }

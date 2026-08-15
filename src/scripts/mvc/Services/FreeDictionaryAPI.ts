@@ -1,7 +1,8 @@
-import { FetchResult, WordData, Definition } from '../../queue.js';
-import { ValidatorService } from './ValidatorService.js';
+import { WordData, Definition } from '../../queue.js';
+import { ValidationResult } from '../Models/ValidationResult.js';
+import { ExternalAPI } from './ExternalAPI.js';
 
-export class DictionaryValidatorService extends ValidatorService {
+export class FreeDictionaryAPI extends ExternalAPI {
     getRequestUrl(word: string): string {
         return `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
     }
@@ -10,25 +11,27 @@ export class DictionaryValidatorService extends ValidatorService {
         return this.getRequestUrl(word);
     }
 
-    async validate(word: string): Promise<FetchResult> {
+    async validate(word: string, signal: AbortSignal): Promise<ValidationResult> {
+        if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+
         try {
-            const response = await fetch(this.getRequestUrl(word));
+            const response = await fetch(this.getRequestUrl(word), { signal });
 
             if (response.ok) {
                 const data = await response.json();
                 if (this.isValidWord(data)) {
-                    return "success";
+                    return { word: word, status: 'valid' };
                 } else {
-                    return "validation-failure";
+                    return { word: word, status: 'invalid' };
                 }
             } else if (response.status === 404) {
-                return "no-definition";
+                return { word: word, status: 'invalid' };
             } else {
                 throw new Error(`${response.status}`);
             }
         } catch (e) {
             console.error("Dictionary API fetch failed:", e);
-            return "network-failure";
+            return { word: word, status: 'stale' };
         }
     }
 
