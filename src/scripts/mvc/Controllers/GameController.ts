@@ -33,15 +33,7 @@ export class GameController {
 
         this.publish.setOnClick(() => this.input.submit());
 
-        this.input.setOnSubmit((word: string) => {
-            this.letters.deactivateAll();
-            this.publishedWords.addPublishedWord(word);
-        });
-        this.input.setOnInsert(this.letters.activate.bind(this.letters));
-        this.input.setOnRemove(this.letters.deactivate.bind(this.letters));
-
-        this.letters.setAppend(this.input.append.bind(this.input));
-        this.letters.setRemove(this.input.remove.bind(this.input));
+        this.rewire();
 
         this.timer.setOnEnd(() => {
             this.letters.deactivateAll();
@@ -54,6 +46,28 @@ export class GameController {
         });
     }
 
+    private rewire(): void {
+        this.input.setOnSubmit((word: string) => {
+            const withCapitalizedGaps = this.letters.capitalizeGaps();
+            this.letters.deactivateAll();
+
+            if (word != withCapitalizedGaps) {
+                this.publishedWords.addPublishedWord(withCapitalizedGaps, 'invalid');
+                return;
+            }
+
+            this.publishedWords.addPublishedWord(word);
+            this.validator.validate(word)
+                .then(this.publishedWords.handleValidationResult.bind(this.publishedWords))
+                .catch((e) => { console.log(`Caught error: ${e}`); });
+        });
+        this.input.setOnInsert(this.letters.activate.bind(this.letters));
+        this.input.setOnRemove(this.letters.deactivate.bind(this.letters));
+
+        this.letters.setAppend(this.input.append.bind(this.input));
+        this.letters.setRemove(this.input.remove.bind(this.input));
+    }
+
     reset(): void {
         // Restart the game
         this.validator.reset();
@@ -63,15 +77,7 @@ export class GameController {
         this.publishedWords.reset();
         this.letters.reset(this.language.getState());
 
-        this.input.setOnSubmit(async (word: string) => {
-            this.letters.deactivateAll();
-            this.publishedWords.addPublishedWord(word);
-            this.validator.validate(word)
-                .then(this.publishedWords.handleValidationResult.bind(this.publishedWords))
-                .catch((e) => { console.log(`Caught error: ${e}`); });
-        });
-        this.input.setOnInsert(this.letters.activate.bind(this.letters));
-        this.input.setOnRemove(this.letters.deactivate.bind(this.letters));
+        this.rewire();
 
         this.letters.setAppend(this.input.append.bind(this.input));
         this.letters.setRemove(this.input.remove.bind(this.input));

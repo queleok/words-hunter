@@ -13,16 +13,17 @@ export class PublishedWordsController {
         this.publishedSet = new Set(this.state.map(w => w.text));
     }
 
-    addPublishedWord(word: string): void {
+    addPublishedWord(word: string, status?: PublishedWordStatus): void {
         if (this.publishedSet.has(word)) {
+            let oldStatus: PublishedWordStatus = 'pending';
             const existingIndex = this.state.findIndex((w) => w.text === word);
             if (existingIndex >= 0) {
-                this.state.splice(existingIndex, 1);
+                oldStatus = this.state.splice(existingIndex, 1)[0].status;
             }
 
-            this.state.unshift({ text: word, status: 'valid' });
+            this.state.unshift({ text: word, status: (status? status : oldStatus) });
         } else {
-            this.state.push({ text: word, status: 'pending' });
+            this.state.push({ text: word, status: (status? status : 'pending') });
             this.publishedSet.add(word);
         }
 

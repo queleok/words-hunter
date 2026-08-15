@@ -116,4 +116,12 @@ export class LetterController {
 
         this.state.buffer = [];
     }
+
+    capitalizeGaps(): string {
+        return this.state.buffer.map((item) => {
+            const letter = String.fromCharCode(item.letterCode);
+            if (item.cellIndex !== undefined) return letter;
+            return letter.toUpperCase();
+        }).join('');
+    }
 }

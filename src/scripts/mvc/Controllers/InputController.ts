@@ -75,7 +75,7 @@ export class InputController {
     }
 
     submit(): void {
-        const published = this.view.getInput().value;
+        const published = this.view.getInput().value.toLowerCase();
         this.reset();
         if (this.onSubmit) {
             this.onSubmit(published);
