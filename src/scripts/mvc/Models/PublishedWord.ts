@@ -1,4 +1,4 @@
-export type PublishedWordStatus = 'pending' | 'valid' | 'invalid' | 'stale' ;
+export type PublishedWordStatus = 'pending' | 'valid' | 'invalid' | 'stale';
 
 export interface PublishedWord {
     text: string;

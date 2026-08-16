@@ -42,21 +42,26 @@ export class GameController {
             this.input.setOnInsert();
             this.input.setOnRemove();
             this.input.setOnSubmit();
-            this.result.end(this.publishedWords.getState());
+
+            this.result.show();
+
+            this.publishedWords.setOnAllResolved(this.result.end.bind(this.result));
         });
     }
 
     private rewire(): void {
+        this.publishedWords.setOnAllResolved();
+
         this.input.setOnSubmit((word: string) => {
             const withCapitalizedGaps = this.letters.capitalizeGaps();
             this.letters.deactivateAll();
 
             if (word != withCapitalizedGaps) {
-                this.publishedWords.addPublishedWord(withCapitalizedGaps, 'invalid');
+                this.publishedWords.addInvalidPublishedWord(withCapitalizedGaps);
                 return;
             }
 
-            this.publishedWords.addPublishedWord(word);
+            this.publishedWords.addPendingPublishedWord(word);
             this.validator.validate(word)
                 .then(this.publishedWords.handleValidationResult.bind(this.publishedWords))
                 .catch((e) => { console.log(`Caught error: ${e}`); });

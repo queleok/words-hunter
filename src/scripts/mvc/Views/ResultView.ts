@@ -13,7 +13,12 @@ export class ResultView {
         if (state.show) {
             this.result.classList.remove('hidden');
             this.hide.classList.add('hidden');
-            this.result.textContent = `Score: ${state.points}`;
+            if (state.pending) {
+                this.result.classList.add('pending-result');
+            } else {
+                this.result.textContent = `Score: ${state.points}`;
+                this.result.classList.remove('pending-result');
+            }
         } else {
             this.result.classList.add('hidden');
             this.hide.classList.remove('hidden');
