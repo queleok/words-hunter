@@ -56,6 +56,11 @@ export class PublishedWordsController {
         const oldStatus = this.state[found].status;
         this.state[found].status = result.status;
 
+        // Forward reference URL from validation result to published word state
+        if (result.referenceUrl !== undefined) {
+            this.state[found].referenceUrl = result.referenceUrl;
+        }
+
         // Update pending count when a word transitions out of 'pending'
         if (oldStatus === 'pending') {
             --this.pendingCount;

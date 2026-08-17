@@ -28,7 +28,7 @@ export class WiktionaryAPI extends ExternalAPI {
 
             const data = await response.json();
             if (this.isCategorizedAsTargetType(data)) {
-                return { word: word, status: 'valid' };
+                return { word: word, status: 'valid', referenceUrl: this.getReferenceUrl(word) };
             } else {
                 return { word: word, status: 'invalid' };
             }
