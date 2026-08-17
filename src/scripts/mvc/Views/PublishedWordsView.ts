@@ -21,7 +21,16 @@ export class PublishedWordsView {
             else if (word.status === 'invalid') div.classList.add('failure');
             else if (word.status === 'stale') div.classList.add('network-failure');
 
-            div.textContent = word.text;
+            if (word.status === 'invalid') {
+                const content = word.text.split('').map((chr) => {
+                    if (chr === chr.toUpperCase()) return `<s>${chr.toLowerCase()}</s>`;
+                    return chr;
+                }).join('');
+                div.innerHTML = content;
+            } else {
+                div.textContent = word.text;
+            }
+
             this.container.appendChild(div);
         });
     }
