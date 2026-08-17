@@ -1,19 +1,19 @@
-import { LanguageCode } from '../Models/LanguageState.js';
+import { LanguageCode, LanguageState, createLanguageState } from '../Models/LanguageState.js';
 import { LanguageView } from '../Views/LanguageView.js';
 
 export class LanguageController {
     private view: LanguageView = new LanguageView('language-selector');
-    private state: LanguageCode;
+    private state: LanguageState;
     private onChange?: () => void;
 
-    constructor(state: LanguageCode = 'en') {
-        this.state = state;
-        this.view.render(this.state);
+    constructor(code: LanguageCode = 'en') {
+        this.state = createLanguageState(code);
+        this.view.render(this.state.code);
         this.view.getSelector().addEventListener('change', this.handleChange.bind(this));
     }
 
     private handleChange(): void {
-        this.state = this.view.getSelectedCode();
+        this.state = createLanguageState(this.view.getSelectedCode());
 
         if (this.onChange) {
             this.onChange();
@@ -24,7 +24,7 @@ export class LanguageController {
         this.onChange = callback;
     }
 
-    getState(): LanguageCode {
+    getState(): LanguageState {
         return this.state;
     }
 }

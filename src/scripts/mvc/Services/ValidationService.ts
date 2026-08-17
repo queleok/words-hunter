@@ -1,3 +1,4 @@
+import { LanguageState } from '../Models/LanguageState.js';
 import { ValidationResult } from '../Models/ValidationResult.js';
 import { WiktionaryAPI } from './WiktionaryAPI.js';
 import { ExternalAPI } from './ExternalAPI.js';
@@ -13,7 +14,9 @@ export class ValidationService {
         this.externalAPI = new WiktionaryAPI('English');
     }
 
-    public reset(): void {
+    public reset(lang: LanguageState): void {
+        this.externalAPI = new WiktionaryAPI(lang.name);
+
         this.queueAbortController.abort();
         this.queueAbortController = new AbortController();
         this.requestQueue = Promise.resolve();

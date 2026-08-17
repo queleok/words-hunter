@@ -75,12 +75,12 @@ export class GameController {
 
     reset(): void {
         // Restart the game
-        this.validator.reset();
+        this.validator.reset(this.language.getState());
 
         this.result.reset();
         this.input.reset();
         this.publishedWords.reset();
-        this.letters.reset(this.language.getState());
+        this.letters.reset(this.language.getState().code);
 
         this.rewire();
 
