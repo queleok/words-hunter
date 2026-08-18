@@ -1,21 +1,30 @@
 import { LanguageState } from '../Models/LanguageState.js';
 import { ValidationResult } from '../Models/ValidationResult.js';
-import { WiktionaryAPI } from './WiktionaryAPI.js';
 import { ExternalAPI } from './ExternalAPI.js';
+import { WiktionaryAPI } from './WiktionaryAPI.js';
+import { FreeDictionaryAPI } from './FreeDictionaryAPI.js';
 
 export class ValidationService {
     private externalAPI: ExternalAPI;
+    private externalAPItype: 'dictionary' | 'wiktionary' = 'wiktionary';
     private lastRequestTime: number = 0;
     private minIntervalMs: number = 500;
     private requestQueue: Promise<any> = Promise.resolve();
     private queueAbortController: AbortController = new AbortController();
 
-    constructor() {
-        this.externalAPI = new WiktionaryAPI('English');
+    constructor(api?: 'dictionary' | 'wiktionary', language?: string) {
+        this.externalAPItype = api || 'wiktionary';
+        this.externalAPI = this.createAPI(this.externalAPItype, language || 'English');
+    }
+
+    private createAPI(api: 'dictionary' | 'wiktionary', language: string) {
+        if (api === 'dictionary') return new FreeDictionaryAPI();
+
+        return new WiktionaryAPI(language);
     }
 
     public reset(lang: LanguageState): void {
-        this.externalAPI = new WiktionaryAPI(lang.name);
+        this.externalAPI = this.createAPI(this.externalAPItype, lang.name);
 
         this.queueAbortController.abort();
         this.queueAbortController = new AbortController();
@@ -67,4 +76,3 @@ export class ValidationService {
         return this.externalAPI.validate(word, signal);
     }
 }
-

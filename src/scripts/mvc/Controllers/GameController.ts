@@ -21,9 +21,14 @@ export class GameController {
     private publishedWords: PublishedWordsController = new PublishedWordsController();
     private result: ResultController = new ResultController();
 
-    private validator: ValidationService = new ValidationService();
+    private validator: ValidationService;
 
     constructor() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const validatorType = (urlParams.get('validator') as 'dictionary' | 'wiktionary') || 'wiktionary';
+
+        this.validator = new ValidationService(validatorType);
+
         this.again.setOnClick(this.reset.bind(this));
         this.shuffle.setOnClick(() => {
             this.input.reset();
