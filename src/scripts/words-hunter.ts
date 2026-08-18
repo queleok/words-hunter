@@ -5,6 +5,8 @@ import { formatTime, formatResult, escapeMissingLetters } from './format.js';
 import { PromiseQueue, FetchResult, IFetchAdapter, DictionaryFetchAdapter, WiktionaryFetchAdapter } from './queue.js';
 import { LetterWidget, WordSynchronizer } from './ui.js';
 
+import { GameController } from './mvc/Controllers/GameController.js';
+
 let freqmap = Array(26).fill(0);
 let queue: PromiseQueue;
 let validator: IFetchAdapter;
@@ -275,5 +277,11 @@ async function reset() {
 }
 
 window.addEventListener('load', function () {
-    reset();
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('redesign') === 'true') {
+        const controller = new GameController();
+        controller.reset();
+    } else {
+        reset();
+    }
 });
