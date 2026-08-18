@@ -1,7 +1,8 @@
 export interface InputState {
     text: string;
+    allowed: string;
 }
 
 export function createInputState(): InputState {
-    return { text: '' };
+    return { text: '', allowed: 'abcdefghijklmnopqrstuvwxyz' };
 }

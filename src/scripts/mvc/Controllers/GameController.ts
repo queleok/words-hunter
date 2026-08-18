@@ -8,6 +8,7 @@ import { PublishedWordsController } from './PublishedWordsController.js';
 import { ResultController } from './ResultController.js';
 import { ValidationService } from '../Services/ValidationService.js';
 import { ValidationResult } from '../Models/ValidationResult.js';
+import { LanguageState, createLanguageState } from '../Models/LanguageState.js';
 
 export class GameController {
     private timer: TimerController = new TimerController();
@@ -15,7 +16,7 @@ export class GameController {
     private shuffle: ButtonController = new ButtonController('shuffle');
     private letters: LetterController = new LetterController();
     private language: LanguageController = new LanguageController();
-    private input: InputController = new InputController();
+    private input: InputController = new InputController(this.language.getState().alphabet);
     private publish: PublishController = new PublishController();
     private publishedWords: PublishedWordsController = new PublishedWordsController();
     private result: ResultController = new ResultController();
@@ -75,12 +76,13 @@ export class GameController {
 
     reset(): void {
         // Restart the game
-        this.validator.reset(this.language.getState());
+        const langState = this.language.getState();
+        this.validator.reset(langState);
 
         this.result.reset();
-        this.input.reset();
+        this.input.reset(langState.alphabet);
         this.publishedWords.reset();
-        this.letters.reset(this.language.getState().code);
+        this.letters.reset(langState.code);
 
         this.rewire();
 

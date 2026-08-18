@@ -9,6 +9,8 @@ export class InputView {
 
     render(state: InputState): void {
         this.input.value = state.text;
+        this.input.setAttribute('pattern', `[${state.allowed}${state.allowed.toUpperCase()}]{3,16}`);
+        this.input.setAttribute('minlength', '3');
     }
 
     getInput(): HTMLInputElement {

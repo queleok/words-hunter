@@ -1,5 +1,6 @@
 import { InputView } from '../Views/InputView.js';
 import { createInputState, InputState } from '../Models/InputState.js';
+import { LanguageState } from '../Models/LanguageState.js';
 
 function spliceReplace(text: string, begin: number, len: number, replacement: string = ''): { remaining: string, removed: string } {
     let splitted = text.split('');
@@ -14,7 +15,8 @@ export class InputController {
     private onInsert?: (letter: string, index: number) => void;
     private onRemove?: (letter: string, index: number) => void;
 
-    constructor() {
+    constructor(allowed: string) {
+        this.state.allowed = allowed;
         this.view.getInput().addEventListener('keydown', this.handleKeyDown.bind(this));
         this.view.getInput().addEventListener('beforeinput', this.handleBeforeInput.bind(this));
     }
@@ -56,6 +58,16 @@ export class InputController {
 
         const len = end - begin;
 
+        // Validate all characters against the language alphabet before processing
+        if (!inputType.startsWith('delete')) {
+            for (let i = 0; i < data.length; ++i) {
+                if (!this.state.allowed.includes(data[i]) && !this.state.allowed.toUpperCase().includes(data[i])) {
+                    event.preventDefault();
+                    return;
+                }
+            }
+        }
+
         const spliced = spliceReplace(this.state.text, begin, len, data);
         this.state.text = spliced.remaining;
 
@@ -69,8 +81,11 @@ export class InputController {
         }
     }
 
-    reset(): void {
-        this.state = createInputState();
+    reset(allowed?: string): void {
+        this.state.text = '';
+
+        if (allowed) this.state.allowed = allowed;
+
         this.view.render(this.state);
     }
 
